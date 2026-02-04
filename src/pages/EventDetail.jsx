@@ -18,6 +18,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import ReservationModal from '../components/ReservationModal';
 import GuestListModal from '../components/GuestListModal';
+import baseurl from '../Base/base';
 
 const EventDetail = () => {
   const { id } = useParams();
@@ -33,7 +34,8 @@ const EventDetail = () => {
 
   const fetchEventDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/events/${id}`);
+      const response = await axios.get(`${baseurl}/events/${id}`);
+      console.log(response)
       setEvent(response.data.event);
     } catch (error) {
       toast.error('Failed to load event details');

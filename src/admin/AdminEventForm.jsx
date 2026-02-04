@@ -12,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import baseurl from '../Base/base';
 
 const AdminEventForm = () => {
   const { id } = useParams();
@@ -20,6 +21,7 @@ const AdminEventForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -39,8 +41,8 @@ const AdminEventForm = () => {
     tags: '',
     isFeatured: false,
     status: 'upcoming',
-    images: [],
-    featuredImage: ''
+    existingImages: [],
+    featuredImageIndex: 0
   });
 
   useEffect(() => {
@@ -57,6 +59,8 @@ const AdminEventForm = () => {
       });
 
       const event = response.data.event;
+      const featuredIndex = event.images.indexOf(event.featuredImage);
+      
       setFormData({
         title: event.title,
         description: event.description,
@@ -74,65 +78,52 @@ const AdminEventForm = () => {
         tags: event.tags.join(', '),
         isFeatured: event.isFeatured,
         status: event.status,
-        images: event.images,
-        featuredImage: event.featuredImage
+        existingImages: event.images || [],
+        featuredImageIndex: featuredIndex >= 0 ? featuredIndex : 0
       });
 
-      setPreviewImages(event.images);
+      setPreviewImages(event.images || []);
     } catch (error) {
       toast.error('Failed to load event data');
       navigate('/admin/events');
     }
   };
 
-  const handleImageUpload = async (file) => {
-    setUploading(true);
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      
-      reader.onloadend = async () => {
-        const base64Image = reader.result;
-        
-        const token = localStorage.getItem('adminToken');
-        const response = await axios.post(`${baseurl}/events`, {
-          imageUpload: true,
-          image: base64Image
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const imageUrl = response.data.url;
-        
-        setFormData(prev => ({
-          ...prev,
-          images: [...prev.images, imageUrl],
-          featuredImage: prev.featuredImage || imageUrl
-        }));
-
-        setPreviewImages(prev => [...prev, imageUrl]);
-        toast.success('Image uploaded successfully');
-      };
-    } catch (error) {
-      toast.error('Failed to upload image');
-    } finally {
-      setUploading(false);
-    }
+  const handleFileSelect = (files) => {
+    const fileArray = Array.from(files);
+    setSelectedFiles(prev => [...prev, ...fileArray]);
+    
+    const newPreviews = fileArray.map(file => URL.createObjectURL(file));
+    setPreviewImages(prev => [...prev, ...newPreviews]);
   };
 
   const handleImageRemove = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-    setPreviewImages(prev => prev.filter((_, i) => i !== index));
+    const isExistingImage = index < formData.existingImages.length;
+    
+    if (isExistingImage) {
+      const newExistingImages = [...formData.existingImages];
+      newExistingImages.splice(index, 1);
+      setFormData(prev => ({
+        ...prev,
+        existingImages: newExistingImages,
+        featuredImageIndex: prev.featuredImageIndex >= newExistingImages.length ? 0 : prev.featuredImageIndex
+      }));
+    } else {
+      const newFileIndex = index - formData.existingImages.length;
+      const newSelectedFiles = [...selectedFiles];
+      newSelectedFiles.splice(newFileIndex, 1);
+      setSelectedFiles(newSelectedFiles);
+    }
+    
+    const newPreviews = [...previewImages];
+    newPreviews.splice(index, 1);
+    setPreviewImages(newPreviews);
   };
 
   const handleSetFeatured = (index) => {
-    const imageUrl = previewImages[index];
     setFormData(prev => ({
       ...prev,
-      featuredImage: imageUrl
+      featuredImageIndex: index
     }));
     toast.success('Set as featured image');
   };
@@ -143,21 +134,48 @@ const AdminEventForm = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const eventData = {
-        ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-        price: parseFloat(formData.price),
-        capacity: parseInt(formData.capacity)
-      };
+      const submitData = new FormData();
+      
+      submitData.append('title', formData.title);
+      submitData.append('description', formData.description);
+      submitData.append('shortDescription', formData.shortDescription);
+      submitData.append('venue', formData.venue);
+      submitData.append('location', formData.location);
+      submitData.append('date', formData.date);
+      submitData.append('time', formData.time);
+      submitData.append('category', formData.category);
+      submitData.append('price', formData.price);
+      submitData.append('capacity', formData.capacity);
+      submitData.append('organizer', formData.organizer);
+      submitData.append('contactEmail', formData.contactEmail);
+      submitData.append('contactPhone', formData.contactPhone);
+      submitData.append('tags', formData.tags);
+      submitData.append('isFeatured', formData.isFeatured);
+      submitData.append('status', formData.status);
+      submitData.append('featuredImageIndex', formData.featuredImageIndex);
+      
+      formData.existingImages.forEach(img => {
+        submitData.append('existingImages', img);
+      });
+      
+      selectedFiles.forEach(file => {
+        submitData.append('images', file);
+      });
 
       if (isEditMode) {
-        await axios.put(`${baseurl}/events/${id}`, eventData, {
-          headers: { Authorization: `Bearer ${token}` }
+        await axios.put(`${baseurl}/events/${id}`, submitData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
         });
         toast.success('Event updated successfully');
       } else {
-        await axios.post(`${baseurl}/events`, eventData, {
-          headers: { Authorization: `Bearer ${token}` }
+        await axios.post(`${baseurl}/events`, submitData, {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
         });
         toast.success('Event created successfully');
       }
@@ -510,17 +528,19 @@ const AdminEventForm = () => {
                 <label className="cursor-pointer">
                   <span className="btn-primary inline-flex items-center">
                     <PhotoIcon className="h-5 w-5 mr-2" />
-                    {uploading ? 'Uploading...' : 'Upload Images'}
+                    Upload Images
                   </span>
                   <input
                     type="file"
                     multiple
                     accept="image/*"
                     onChange={(e) => {
-                      Array.from(e.target.files).forEach(file => handleImageUpload(file));
+                      const files = Array.from(e.target.files);
+                      if (files.length > 0) {
+                        handleFileSelect(files);
+                      }
                     }}
                     className="hidden"
-                    disabled={uploading}
                   />
                 </label>
                 <p className="mt-2 text-sm text-gray-500">
@@ -552,11 +572,11 @@ const AdminEventForm = () => {
                           type="button"
                           onClick={() => handleSetFeatured(index)}
                           className={`p-2 rounded-full ${
-                            formData.featuredImage === image
+                            formData.featuredImageIndex === index
                               ? 'bg-yellow-500 text-white'
                               : 'bg-white/80 text-gray-900 hover:bg-white'
                           }`}
-                          title={formData.featuredImage === image ? 'Featured' : 'Set as featured'}
+                          title={formData.featuredImageIndex === index ? 'Featured' : 'Set as featured'}
                         >
                           ★
                         </button>
@@ -569,7 +589,7 @@ const AdminEventForm = () => {
                           <XMarkIcon className="h-4 w-4" />
                         </button>
                       </div>
-                      {formData.featuredImage === image && (
+                      {formData.featuredImageIndex === index && (
                         <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded">
                           Featured
                         </div>
@@ -592,7 +612,7 @@ const AdminEventForm = () => {
           </button>
           <button
             type="submit"
-            disabled={loading || uploading}
+            disabled={loading}
             className="btn-primary px-8 py-3 disabled:opacity-50"
           >
             {loading ? 'Saving...' : isEditMode ? 'Update Event' : 'Create Event'}

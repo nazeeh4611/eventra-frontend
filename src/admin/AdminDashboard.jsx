@@ -23,6 +23,7 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
+import baseurl from '../Base/base';
 
 ChartJS.register(
   CategoryScale,
