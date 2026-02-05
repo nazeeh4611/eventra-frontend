@@ -1,2 +1,241 @@
 @import "tailwindcss";
 
+
+/* Eventra Nightlife Theme - Custom Animations & Effects */
+
+@keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.8;
+      transform: scale(1.05);
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+  
+  @keyframes shimmer {
+    0% {
+      background-position: -1000px 0;
+    }
+    100% {
+      background-position: 1000px 0;
+    }
+  }
+  
+  @keyframes neon-flicker {
+    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+      text-shadow:
+        0 0 10px rgba(168, 85, 247, 0.8),
+        0 0 20px rgba(168, 85, 247, 0.6),
+        0 0 30px rgba(168, 85, 247, 0.4),
+        0 0 40px rgba(168, 85, 247, 0.2);
+    }
+    20%, 24%, 55% {
+      text-shadow: none;
+    }
+  }
+  
+  /* Gradient animation for backgrounds */
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+  
+  /* Apply animations */
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 3s linear infinite;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(168, 85, 247, 0.3),
+      transparent
+    );
+    background-size: 200% 100%;
+  }
+  
+  .animate-neon-flicker {
+    animation: neon-flicker 1.5s infinite alternate;
+  }
+  
+  .gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 6s ease infinite;
+  }
+  
+  /* Custom scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: rgba(17, 24, 39, 0.8);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #9333ea, #ec4899);
+    border-radius: 6px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #a855f7, #f472b6);
+  }
+  
+  /* Glass morphism effect */
+  .glass-effect {
+    background: rgba(17, 24, 39, 0.4);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+  }
+  
+  /* Neon border glow effect */
+  .neon-border {
+    position: relative;
+    border: 2px solid transparent;
+    background: linear-gradient(#030712, #030712) padding-box,
+                linear-gradient(90deg, #9333ea, #ec4899, #9333ea) border-box;
+    animation: gradient-shift 3s ease infinite;
+  }
+  
+  /* Spotlight effect on hover */
+  .spotlight-hover {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .spotlight-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    transition: left 0.5s;
+  }
+  
+  .spotlight-hover:hover::before {
+    left: 100%;
+  }
+  
+  /* Particle effect background */
+  @keyframes particles {
+    0% {
+      transform: translateY(0) translateX(0) scale(1);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-1000px) translateX(200px) scale(0);
+      opacity: 0;
+    }
+  }
+  
+  .particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: #a855f7;
+    border-radius: 50%;
+    animation: particles 15s linear infinite;
+  }
+  
+  /* Text glow effect */
+  .text-glow {
+    text-shadow:
+      0 0 10px rgba(168, 85, 247, 0.6),
+      0 0 20px rgba(168, 85, 247, 0.4),
+      0 0 30px rgba(168, 85, 247, 0.2);
+  }
+  
+  /* Button press effect */
+  .btn-press:active {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 rgba(168, 85, 247, 0);
+  }
+  
+  /* Card hover lift effect */
+  .card-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .card-lift:hover {
+    transform: translateY(-8px) rotateX(2deg);
+    box-shadow: 
+      0 20px 40px rgba(168, 85, 247, 0.3),
+      0 0 80px rgba(236, 72, 153, 0.2);
+  }
+  
+  /* Loading pulse animation */
+  @keyframes loading-pulse {
+    0%, 100% {
+      opacity: 0.3;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+  
+  .loading-pulse {
+    animation: loading-pulse 1.5s ease-in-out infinite;
+  }
+  
+  /* Responsive utilities for nightclub theme */
+  @media (max-width: 768px) {
+    .text-glow {
+      text-shadow:
+        0 0 5px rgba(168, 85, 247, 0.6),
+        0 0 10px rgba(168, 85, 247, 0.4);
+    }
+  }
+  
+  /* Custom focus styles */
+  *:focus {
+    outline: 2px solid #a855f7;
+    outline-offset: 2px;
+  }
+  
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  /* Selection color */
+  ::selection {
+    background-color: rgba(168, 85, 247, 0.3);
+    color: white;
+  }

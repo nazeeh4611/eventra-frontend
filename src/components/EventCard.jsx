@@ -4,9 +4,9 @@ import {
   MapPinIcon, 
   CalendarDaysIcon, 
   ClockIcon,
-  UserGroupIcon,
   TicketIcon,
-  ChevronRightIcon
+  StarIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 import ReservationModal from './ReservationModal';
 import GuestListModal from './GuestListModal';
@@ -17,102 +17,84 @@ const EventCard = ({ event }) => {
 
   const availableSeats = event.capacity - event.bookedSeats;
   const date = new Date(event.date);
-  const formattedDate = date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
 
   return (
     <>
-      <div className="bg-white rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 card-hover">
-        <div className="relative h-56 overflow-hidden">
+      <div className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-pink-600/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-pink-600/10 group-hover:to-purple-600/10 transition-all duration-500" />
+        
+        <div className="relative h-60 overflow-hidden">
           <img
-            src={event.featuredImage}
+            src={event.featuredImage || event.image}
             alt={event.title}
-            className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
-          {event.isFeatured && (
-            <div className="absolute top-4 left-4">
-              <span className="px-3 py-1 bg-gradient-to-r from-dubai-gold to-yellow-600 text-white text-xs font-bold rounded-full">
-                FEATURED
-              </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+          
+          <div className="absolute top-3 left-3">
+            <div className="flex items-center gap-2">
+              <div className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs font-semibold">
+                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </div>
+              {event.isFeatured && (
+                <div className="px-2 py-1 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg text-white text-xs font-semibold">
+                  Featured
+                </div>
+              )}
             </div>
-          )}
-          <div className="absolute top-4 right-4">
-            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-dubai-blue text-sm font-semibold rounded-lg">
+          </div>
+
+          <div className="absolute bottom-3 left-3 right-3 flex justify-between items-center">
+            <span className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-white text-sm font-bold">
               AED {event.price}
             </span>
-          </div>
-          <div className="absolute bottom-4 left-4">
-            <span className={`px-3 py-1 text-white text-sm font-semibold rounded-lg ${
-              event.status === 'upcoming' ? 'bg-green-500' :
-              event.status === 'ongoing' ? 'bg-blue-500' :
-              event.status === 'completed' ? 'bg-gray-500' : 'bg-red-500'
-            }`}>
-              {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-            </span>
+            <div className="flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs">
+              <UserGroupIcon className="h-3.5 w-3.5" />
+              <span>{availableSeats}</span>
+            </div>
           </div>
         </div>
 
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <span className="px-3 py-1 bg-blue-100 text-dubai-blue text-xs font-semibold rounded-full">
-                {event.category}
-              </span>
+        <div className="relative p-4">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="text-base font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300 line-clamp-1 flex-1 pr-2">
+              {event.title}
+            </h3>
+            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300">
+              {event.category}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between mb-3 text-xs text-gray-400">
+            <div className="flex items-center gap-1">
+              <CalendarDaysIcon className="h-3.5 w-3.5" />
+              <span>{event.time}</span>
             </div>
-            <div className="text-sm text-gray-500">
-              {availableSeats} seats left
+            <div className="flex items-center gap-1">
+              <MapPinIcon className="h-3.5 w-3.5" />
+              <span className="truncate max-w-[100px]">{event.venue}</span>
             </div>
           </div>
 
-          <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-1">
-            {event.title}
-          </h3>
-          <p className="text-gray-600 mb-6 line-clamp-2">
-            {event.shortDescription}
-          </p>
-
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center text-gray-700">
-              <CalendarDaysIcon className="h-5 w-5 text-dubai-blue mr-2" />
-              <span className="text-sm font-medium">{formattedDate}</span>
-            </div>
-            <div className="flex items-center text-gray-700">
-              <ClockIcon className="h-5 w-5 text-dubai-blue mr-2" />
-              <span className="text-sm font-medium">{event.time}</span>
-            </div>
-            <div className="flex items-center text-gray-700">
-              <MapPinIcon className="h-5 w-5 text-dubai-blue mr-2" />
-              <span className="text-sm font-medium">{event.venue}</span>
-            </div>
-            <div className="flex items-center text-gray-700">
-              <UserGroupIcon className="h-5 w-5 text-dubai-blue mr-2" />
-              <span className="text-sm font-medium">{event.organizer}</span>
-            </div>
-          </div>
-
-          <div className="flex flex-col space-y-3">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => setShowReservationModal(true)}
-              className="btn-primary w-full flex items-center justify-center"
+              className="py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-1"
             >
-              <TicketIcon className="h-5 w-5 mr-2" />
-              Reserve Now
+              <TicketIcon className="h-4 w-4" />
+              <span>Book</span>
             </button>
             <button
               onClick={() => setShowGuestListModal(true)}
-              className="w-full py-3 px-4 border-2 border-dubai-blue text-dubai-blue font-semibold rounded-lg hover:bg-dubai-blue hover:text-white transition duration-300"
+              className="py-2 border border-purple-500/30 text-purple-300 text-sm font-semibold rounded-lg hover:bg-white/5 transition-all duration-300"
             >
-              Join Guest List
+              Guest List
             </button>
             <Link
               to={`/events/${event._id}`}
-              className="w-full py-3 px-4 text-center text-dubai-blue font-semibold rounded-lg hover:bg-blue-50 transition duration-300 flex items-center justify-center"
+              className="py-2 border border-purple-500/30 text-purple-300 text-sm font-semibold rounded-lg hover:bg-white/5 transition-all duration-300 flex items-center justify-center"
             >
-              View Details
-              <ChevronRightIcon className="h-4 w-4 ml-1" />
+              Details
             </Link>
           </div>
         </div>

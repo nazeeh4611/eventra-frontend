@@ -62,32 +62,28 @@ const Contact = () => {
       description: 'Business Bay, Dubai, UAE',
       details: 'Emirates Towers, Level 15',
       icon: MapPinIcon,
-      color: 'text-pink-500',
-      bgColor: 'bg-pink-50'
+      color: 'text-pink-400'
     },
     {
       title: 'Call Us',
       description: '+971 4 123 4567',
       details: 'Mon-Fri 9AM-6PM',
       icon: PhoneIcon,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-50'
+      color: 'text-purple-400'
     },
     {
       title: 'Email Us',
       description: 'info@eventradubai.ae',
       details: 'support@eventradubai.ae',
       icon: EnvelopeIcon,
-      color: 'text-sky-500',
-      bgColor: 'bg-sky-50'
+      color: 'text-blue-400'
     },
     {
       title: 'Business Hours',
       description: 'Sunday - Thursday',
       details: '9:00 AM - 6:00 PM GST',
       icon: ClockIcon,
-      color: 'text-yellow-500',
-      bgColor: 'bg-yellow-50'
+      color: 'text-yellow-400'
     }
   ];
 
@@ -115,305 +111,367 @@ const Contact = () => {
   ];
 
   return (
-    <div className="space-y-20 bg-white text-gray-900">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-40 -left-32 h-96 w-96 rounded-full bg-gradient-to-r from-pink-200/50 to-purple-200/30 blur-3xl animate-pulse" />
-          <div className="absolute top-1/4 right-20 h-80 w-80 rounded-full bg-gradient-to-r from-sky-200/40 to-yellow-200/30 blur-3xl animate-pulse delay-1000" />
-          <div className="absolute bottom-[-10rem] left-1/4 h-96 w-96 rounded-full bg-gradient-to-r from-purple-200/40 to-pink-200/50 blur-3xl animate-pulse delay-500" />
-        </div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32 text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-gray-900 via-pink-600 to-purple-600 bg-clip-text text-transparent mb-6">
-            Get In Touch
-          </h1>
-          <p className="text-xl sm:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Ready to plan your next epic event? Our team is here to make it unforgettable.
-          </p>
-        </div>
-      </section>
+    <div className="min-h-screen bg-gray-950 text-white">
+      {/* Animated background effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-pulse delay-500" />
+      </div>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-3 gap-12 lg:gap-16">
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 lg:p-12">
-              <div className="flex items-center mb-10 lg:mb-12">
-                <div className="p-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-2xl mr-4 lg:mr-6 shadow-lg">
-                  <ChatBubbleLeftRightIcon className="h-7 w-7 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
-                    Send us a message
-                  </h2>
-                  <p className="text-xl text-gray-600">We respond within 24 hours</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-transparent shadow-sm transition-all duration-200 text-lg placeholder-gray-400"
-                      placeholder="Your full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm transition-all duration-200 text-lg placeholder-gray-400"
-                      placeholder="hello@eventradubai.ae"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-sky-500 focus:border-transparent shadow-sm transition-all duration-200 text-lg placeholder-gray-400"
-                      placeholder="+971 50 123 4567"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Subject *
-                    </label>
-                    <select
-                      name="subject"
-                      value={formData.subject}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent shadow-sm transition-all duration-200 text-lg appearance-none bg-white"
-                    >
-                      <option value="">Choose your inquiry</option>
-                      <option value="general">General Inquiry</option>
-                      <option value="partnership">Partnership Opportunity</option>
-                      <option value="event">Event Planning</option>
-                      <option value="technical">Technical Support</option>
-                      <option value="feedback">Feedback & Suggestions</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    Your Message *
-                  </label>
-                  <textarea
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    rows="6"
-                    className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-pink-500 focus:border-transparent shadow-sm transition-all duration-200 text-lg resize-vertical placeholder-gray-400"
-                    placeholder="Tell us about your event vision, party plans, or questions..."
-                  />
-                </div>
-
-                <div className="flex items-start p-4 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border-2 border-pink-100">
-                  <input
-                    type="checkbox"
-                    id="newsletter"
-                    className="h-5 w-5 text-pink-500 focus:ring-pink-500 border-gray-300 rounded mt-1 flex-shrink-0"
-                  />
-                  <label htmlFor="newsletter" className="ml-3 text-base text-gray-700 leading-relaxed cursor-pointer">
-                    ✨ Subscribe to our newsletter for exclusive event invites and party updates
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500 hover:from-pink-600 hover:via-purple-600 hover:to-sky-600 text-white font-bold py-5 px-8 rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 text-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {loading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-                      Sending Message...
-                    </>
-                  ) : (
-                    <>
-                      Send Message
-                      <PaperAirplaneIcon className="h-6 w-6 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div className="space-y-8 lg:sticky lg:top-8 lg:h-screen lg:flex lg:flex-col lg:justify-center">
-            <div className="space-y-6">
-              <h3 className="text-3xl font-bold text-gray-900 bg-gradient-to-r from-gray-900 to-pink-600 bg-clip-text">
-                Quick Contact
-              </h3>
-              <p className="text-xl text-gray-600 leading-relaxed">
-                Reach out through any channel. Our team responds fast!
+      <div className="relative">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden pt-32 pb-20 px-6">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/50 via-gray-950 to-gray-950" />
+          
+          <div className="container mx-auto max-w-7xl relative z-10">
+            <div className="text-center space-y-8">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold">
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white">
+                  Get In Touch
+                </span>
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
+                Ready to plan your next epic event? Our team is here to make it unforgettable.
               </p>
             </div>
+          </div>
+        </section>
 
-            <div className="space-y-6">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 border border-gray-100 transition-all duration-300 hover:border-pink-200">
-                  <div className="flex items-start space-x-4">
-                    <div className={`p-4 ${info.bgColor} rounded-2xl shadow-lg group-hover:scale-105 transition-transform duration-200`}>
-                      <info.icon className={`h-7 w-7 ${info.color}`} />
+        {/* Contact Form Section */}
+        <section className="py-20 px-6">
+          <div className="container mx-auto max-w-7xl">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="relative rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-8 lg:p-12">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-pink-600/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-pink-600/10 group-hover:to-purple-600/10 rounded-2xl transition-all duration-300" />
+                  
+                  <div className="relative flex items-center mb-10">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30 mr-6">
+                      <ChatBubbleLeftRightIcon className="h-8 w-8 text-purple-300" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-pink-600 transition-colors">{info.title}</h4>
-                      <p className="text-lg font-semibold text-gray-900 mb-1 truncate">{info.description}</p>
-                      <p className="text-sm text-gray-500 leading-relaxed">{info.details}</p>
+                    <div>
+                      <h2 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-2">
+                        Send us a message
+                      </h2>
+                      <p className="text-xl text-gray-400">We respond within 24 hours</p>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
 
-            <div className="bg-gradient-to-br from-pink-500 to-purple-500 rounded-3xl p-8 text-white shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all duration-300">
-              <h4 className="text-2xl font-bold mb-4">🚨 Emergency Support</h4>
-              <p className="mb-6 text-lg opacity-95">Immediate help for ongoing events</p>
-              <div className="text-3xl font-black mb-3">+971 50 123 4567</div>
-              <p className="text-base opacity-90 font-medium">24/7 emergency hotline</p>
+                  <form onSubmit={handleSubmit} className="relative space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleChange}
+                          required
+                          className="w-full px-5 py-4 rounded-2xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                          placeholder="Your full name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          required
+                          className="w-full px-5 py-4 rounded-2xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                          placeholder="hello@eventradubai.ae"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleChange}
+                          className="w-full px-5 py-4 rounded-2xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
+                          placeholder="+971 50 123 4567"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          Subject *
+                        </label>
+                        <select
+                          name="subject"
+                          value={formData.subject}
+                          onChange={handleChange}
+                          required
+                          className="w-full px-5 py-4 rounded-2xl bg-gray-900/50 border border-purple-500/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 appearance-none"
+                        >
+                          <option value="" className="bg-gray-900">Choose your inquiry</option>
+                          <option value="general" className="bg-gray-900">General Inquiry</option>
+                          <option value="partnership" className="bg-gray-900">Partnership Opportunity</option>
+                          <option value="event" className="bg-gray-900">Event Planning</option>
+                          <option value="technical" className="bg-gray-900">Technical Support</option>
+                          <option value="feedback" className="bg-gray-900">Feedback & Suggestions</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-300 mb-3">
+                        Your Message *
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleChange}
+                        required
+                        rows="6"
+                        className="w-full px-5 py-4 rounded-2xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 resize-vertical"
+                        placeholder="Tell us about your event vision, party plans, or questions..."
+                      />
+                    </div>
+
+                    <div className="flex items-start p-4 rounded-2xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30">
+                      <input
+                        type="checkbox"
+                        id="newsletter"
+                        className="h-5 w-5 text-purple-500 focus:ring-purple-500 border-gray-600 rounded mt-1 flex-shrink-0 bg-gray-800"
+                      />
+                      <label htmlFor="newsletter" className="ml-3 text-base text-gray-300 leading-relaxed cursor-pointer">
+                        ✨ Subscribe to our newsletter for exclusive event invites and party updates
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full group relative inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+                          Sending Message...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <PaperAirplaneIcon className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {/* Contact Info Sidebar */}
+              <div className="space-y-8">
+                <div className="space-y-6">
+                  <h3 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white">
+                    Quick Contact
+                  </h3>
+                  <p className="text-xl text-gray-400 leading-relaxed">
+                    Reach out through any channel. Our team responds fast!
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  {contactInfo.map((info, index) => (
+                    <div key={index} className="group relative rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 hover:border-purple-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20">
+                      <div className="relative flex items-start space-x-4">
+                        <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 text-purple-300 group-hover:scale-110 transition-all duration-300">
+                          <info.icon className={`h-7 w-7 ${info.color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-xl text-white mb-2 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300">
+                            {info.title}
+                          </h4>
+                          <p className="text-lg font-semibold text-gray-300 mb-1 truncate">
+                            {info.description}
+                          </p>
+                          <p className="text-sm text-gray-400 leading-relaxed">
+                            {info.details}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Emergency Support */}
+                <div className="relative rounded-3xl bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-purple-600/20 backdrop-blur-sm border border-pink-500/30 p-8 hover:shadow-2xl hover:shadow-pink-500/20 transition-all duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10 rounded-3xl" />
+                  
+                  <div className="relative space-y-4">
+                    <h4 className="text-2xl font-bold text-white">🚨 Emergency Support</h4>
+                    <p className="text-lg text-gray-300">
+                      Immediate help for ongoing events
+                    </p>
+                    <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 mb-2">
+                      +971 50 123 4567
+                    </div>
+                    <p className="text-base text-gray-400 font-medium">
+                      24/7 emergency hotline
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-gradient-to-br from-pink-50 via-white to-purple-50 rounded-3xl shadow-2xl p-12 border border-pink-100 overflow-hidden">
-          <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 text-center bg-gradient-to-r from-gray-900 to-pink-600 bg-clip-text">
-            Contact Specific Departments
-          </h3>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {departments.map((dept, index) => (
-              <div key={index} className="group bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-gray-100 hover:border-purple-200 text-center">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-r from-pink-100 to-purple-100 group-hover:from-pink-200 group-hover:to-purple-200 p-4 shadow-lg transition-all duration-300">
-                  <EnvelopeIcon className="h-8 w-8 text-pink-600 group-hover:scale-110 transition-transform" />
+        {/* Departments Section */}
+        <section className="py-20 px-6">
+          <div className="container mx-auto max-w-7xl">
+            <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-12 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+              
+              <div className="relative">
+                <h3 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-12 text-center">
+                  Contact Specific Departments
+                </h3>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {departments.map((dept, index) => (
+                    <div key={index} className="group relative rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-8 hover:border-purple-400/50 transition-all duration-300 hover:scale-105 text-center">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-pink-600/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-pink-600/10 group-hover:to-purple-600/10 rounded-2xl transition-all duration-300" />
+                      
+                      <div className="relative">
+                        <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30 p-4 group-hover:scale-110 transition-all duration-300">
+                          <EnvelopeIcon className="h-8 w-8 text-purple-300" />
+                        </div>
+                        <h4 className="text-xl font-bold text-white mb-4 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300">
+                          {dept.name}
+                        </h4>
+                        <div className="space-y-2">
+                          <a 
+                            href={`mailto:${dept.email}`}
+                            className="block text-purple-400 hover:text-purple-300 font-semibold text-base transition-colors"
+                          >
+                            📧 {dept.email}
+                          </a>
+                          <a 
+                            href={`tel:${dept.phone}`}
+                            className="block text-gray-400 hover:text-gray-300 font-medium text-sm transition-colors"
+                          >
+                            📞 {dept.phone}
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <h4 className="text-xl font-bold text-gray-900 mb-4 group-hover:text-purple-600 transition-colors">{dept.name}</h4>
-                <div className="space-y-2">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Map Section */}
+        <section className="py-20 px-6">
+          <div className="container mx-auto max-w-7xl">
+            <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 overflow-hidden">
+              <div className="h-96 lg:h-[28rem] relative">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3610.238592056396!2d55.27041477519598!3d25.197366977705753!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f43348a67e24b%3A0xff45e502e1ceb7e2!2sBurj%20Khalifa!5e0!3m2!1sen!2sae!4v1686141234567!5m2!1sen!2sae"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  title="Eventra Dubai Location"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="w-full h-full"
+                />
+              </div>
+              
+              <div className="p-12 lg:px-20">
+                <h3 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-12 text-center">
+                  Find Our Office
+                </h3>
+                <div className="grid md:grid-cols-3 gap-12">
+                  <div className="text-center lg:text-left">
+                    <h4 className="text-2xl font-bold text-white mb-4 flex items-center justify-center lg:justify-start gap-2">
+                      <MapPinIcon className="h-8 w-8 text-pink-400" />
+                      Main Office
+                    </h4>
+                    <p className="text-lg text-gray-300 leading-relaxed">
+                      Emirates Towers<br />
+                      Level 15<br />
+                      Business Bay, Dubai<br />
+                      United Arab Emirates
+                    </p>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <h4 className="text-2xl font-bold text-white mb-4 flex items-center justify-center lg:justify-start gap-2">
+                      <ClockIcon className="h-8 w-8 text-purple-400" />
+                      Parking
+                    </h4>
+                    <p className="text-lg text-gray-300 leading-relaxed">
+                      Underground parking available<br />
+                      Valet service on request<br />
+                      EV charging stations
+                    </p>
+                  </div>
+                  <div className="text-center lg:text-left">
+                    <h4 className="text-2xl font-bold text-white mb-4 flex items-center justify-center lg:justify-start gap-2">
+                      <UsersIcon className="h-8 w-8 text-blue-400" />
+                      Public Transport
+                    </h4>
+                    <p className="text-lg text-gray-300 leading-relaxed">
+                      Business Bay Metro Station<br />
+                      Multiple bus routes<br />
+                      Taxi stand at entrance
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-20 px-6">
+          <div className="container mx-auto max-w-7xl">
+            <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-16 lg:p-20 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+              
+              <div className="relative text-center">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 mb-8">
+                  <ChatBubbleLeftRightIcon className="h-12 w-12" />
+                </div>
+                <h2 className="text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-6">
+                  Still have questions?
+                </h2>
+                <p className="text-xl lg:text-2xl text-gray-300 max-w-3xl mx-auto mb-12 leading-relaxed">
+                  Check our FAQ or schedule a quick call for personalized party planning assistance.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
                   <a 
-                    href={`mailto:${dept.email}`}
-                    className="block text-pink-600 hover:text-pink-700 font-semibold text-base transition-colors"
+                    href="#faq" 
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-10 py-5 text-xl font-bold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105"
                   >
-                    📧 {dept.email}
+                    <span>🎉 View FAQ</span>
+                    <svg className="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
                   </a>
-                  <a 
-                    href={`tel:${dept.phone}`}
-                    className="block text-gray-700 hover:text-gray-900 font-medium text-sm transition-colors"
-                  >
-                    📞 {dept.phone}
-                  </a>
+                  <button className="inline-flex items-center justify-center rounded-full bg-white/5 backdrop-blur-sm border border-purple-500/30 px-10 py-5 text-xl font-bold text-white hover:bg-white/10 hover:border-purple-400/50 transition-all duration-300">
+                    📞 Schedule a Call
+                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="h-96 lg:h-[28rem] relative">
-            <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3610.238592056396!2d55.27041477519598!3d25.197366977705753!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e5f43348a67e24b%3A0xff45e502e1ceb7e2!2sBurj%20Khalifa!5e0!3m2!1sen!2sae!4v1686141234567!5m2!1sen!2sae"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              allowFullScreen=""
-              loading="lazy"
-              title="Eventra Dubai Location"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="w-full h-full"
-            />
-          </div>
-          <div className="p-12 lg:px-20">
-            <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 text-center bg-gradient-to-r from-gray-900 to-pink-600 bg-clip-text">
-              Find Our Office
-            </h3>
-            <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
-              <div className="text-center lg:text-left">
-                <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center lg:justify-start gap-2">
-                  <MapPinIcon className="h-8 w-8 text-pink-500" />
-                  Main Office
-                </h4>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Emirates Towers<br />
-                  Level 15<br />
-                  Business Bay, Dubai<br />
-                  United Arab Emirates
-                </p>
-              </div>
-              <div className="text-center lg:text-left">
-                <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center lg:justify-start gap-2">
-                  <ClockIcon className="h-8 w-8 text-purple-500" />
-                  Parking
-                </h4>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Underground parking available<br />
-                  Valet service on request<br />
-                  EV charging stations
-                </p>
-              </div>
-              <div className="text-center lg:text-left">
-                <h4 className="text-2xl font-bold text-gray-900 mb-4 flex items-center justify-center lg:justify-start gap-2">
-                  <UsersIcon className="h-8 w-8 text-sky-500" />
-                  Public Transport
-                </h4>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  Business Bay Metro Station<br />
-                  Multiple bus routes<br />
-                  Taxi stand at entrance
-                </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center bg-gradient-to-r from-pink-50 via-purple-50 to-sky-50 rounded-3xl p-16 lg:p-20 border-2 border-pink-100 shadow-2xl">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-2xl mb-8 mx-auto">
-            <ChatBubbleLeftRightIcon className="h-12 w-12" />
-          </div>
-          <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-gray-900 via-pink-600 to-purple-600 bg-clip-text">
-            Still have questions?
-          </h2>
-          <p className="text-xl lg:text-2xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
-            Check our FAQ or schedule a quick call for personalized party planning assistance.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-            <a 
-              href="#faq" 
-              className="inline-flex items-center justify-center px-10 py-5 bg-gradient-to-r from-pink-500 to-purple-500 text-xl font-bold text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
-            >
-              🎉 View FAQ
-            </a>
-            <button className="inline-flex items-center justify-center px-10 py-5 border-2 border-gray-300 bg-white text-xl font-bold text-gray-900 rounded-2xl shadow-lg hover:border-pink-400 hover:bg-pink-50 hover:shadow-xl hover:scale-105 transition-all duration-300">
-              📞 Schedule a Call
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </div>
   );
 };

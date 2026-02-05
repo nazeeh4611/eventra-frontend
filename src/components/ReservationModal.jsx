@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, TicketIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 
 const ReservationModal = ({ event, onClose }) => {
   const [formData, setFormData] = useState({
     fullName: '',
-    email: '',
     phone: '',
-    numberOfTickets: 1,
-    specialRequirements: ''
+    numberOfTickets: 1
   });
 
   const [loading, setLoading] = useState(false);
@@ -28,10 +26,8 @@ const ReservationModal = ({ event, onClose }) => {
 
       const whatsappMessage = `New Reservation for ${event.title}%0A%0A` +
         `Name: ${formData.fullName}%0A` +
-        `Email: ${formData.email}%0A` +
         `Phone: ${formData.phone}%0A` +
-        `Tickets: ${formData.numberOfTickets}%0A` +
-        `Special Requirements: ${formData.specialRequirements || 'None'}`;
+        `Tickets: ${formData.numberOfTickets}`;
 
       window.open(`https://wa.me/+971501234567?text=${whatsappMessage}`, '_blank');
 
@@ -55,34 +51,46 @@ const ReservationModal = ({ event, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Reserve Tickets for {event.title}
-            </h2>
+      <div className="relative rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 max-w-sm w-full overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+        
+        <div className="relative p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                <TicketIcon className="h-5 w-5 text-purple-300" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">
+                  Reserve Tickets
+                </h2>
+                <p className="text-xs text-gray-400">{event.title}</p>
+              </div>
+            </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1 hover:bg-white/5 rounded-lg transition-colors"
             >
-              <XMarkIcon className="h-6 w-6 text-gray-500" />
+              <XMarkIcon className="h-5 w-5 text-gray-400" />
             </button>
           </div>
 
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-700">Available Seats:</span>
-              <span className="font-semibold text-dubai-blue">{maxTickets}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-700">Price per ticket:</span>
-              <span className="font-bold text-lg text-dubai-gold">AED {event.price}</span>
+          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-400">Available</p>
+                <p className="text-sm font-semibold text-white">{maxTickets} seats</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">Price</p>
+                <p className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">AED {event.price}</p>
+              </div>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-300 mb-1">
                 Full Name *
               </label>
               <input
@@ -91,45 +99,28 @@ const ReservationModal = ({ event, onClose }) => {
                 value={formData.fullName}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
                 placeholder="Enter your full name"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                  placeholder="email@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone *
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                  placeholder="+971 50 123 4567"
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-300 mb-1">
+                Phone Number *
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
+                placeholder="+971 50 123 4567"
+              />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-300 mb-1">
                 Number of Tickets *
               </label>
               <select
@@ -137,69 +128,44 @@ const ReservationModal = ({ event, onClose }) => {
                 value={formData.numberOfTickets}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm appearance-none"
               >
                 {Array.from({ length: Math.min(maxTickets, 10) }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
+                  <option key={i + 1} value={i + 1} className="bg-gray-900">
                     {i + 1} Ticket{i + 1 > 1 ? 's' : ''}
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-sm text-gray-500">
-                Maximum {maxTickets} tickets available
+              <p className="mt-1 text-xs text-gray-400">
+                Max {maxTickets} tickets
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Special Requirements
-              </label>
-              <textarea
-                name="specialRequirements"
-                value={formData.specialRequirements}
-                onChange={handleChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                placeholder="Any special requirements or comments..."
-              />
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between mb-2">
-                <span className="text-gray-700">Subtotal:</span>
-                <span className="font-semibold">
-                  AED {event.price * formData.numberOfTickets}
-                </span>
-              </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span>Total Amount:</span>
-                <span className="text-dubai-gold">
-                  AED {event.price * formData.numberOfTickets}
-                </span>
+            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-xs text-gray-400">Total</p>
+                  <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                    AED {event.price * formData.numberOfTickets}
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="py-2 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-200 disabled:opacity-50"
+                >
+                  {loading ? 'Processing...' : 'Confirm'}
+                </button>
               </div>
             </div>
 
-            <div className="flex space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition duration-300"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 btn-primary disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : 'Confirm Reservation'}
-              </button>
-            </div>
-
-            <p className="text-xs text-gray-500 text-center mt-4">
-              By confirming, you agree to our terms and conditions. 
-              You'll be redirected to WhatsApp for final confirmation.
-            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-2.5 px-4 border border-purple-500/30 text-gray-300 text-sm font-semibold rounded-xl hover:bg-white/5 transition-all duration-200 mt-2"
+            >
+              Cancel
+            </button>
           </form>
         </div>
       </div>

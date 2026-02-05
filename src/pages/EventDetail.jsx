@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   MapPinIcon, 
   CalendarDaysIcon, 
   ClockIcon,
   UserGroupIcon,
   TicketIcon,
-  PhoneIcon,
-  EnvelopeIcon,
-  BuildingOffice2Icon,
   ArrowLeftIcon,
   ShareIcon,
   HeartIcon,
-  CheckBadgeIcon
+  CheckBadgeIcon,
+  BuildingOffice2Icon,
+  PhoneIcon,
+  EnvelopeIcon,
+  StarIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import ReservationModal from '../components/ReservationModal';
@@ -22,426 +25,697 @@ import baseurl from '../Base/base';
 
 const EventDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showGuestListModal, setShowGuestListModal] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
-  useEffect(() => {
-    fetchEventDetails();
-  }, [id]);
-
-  const fetchEventDetails = async () => {
+  // Fetch event details with error handling
+  const fetchEventDetails = useCallback(async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await axios.get(`${baseurl}/events/${id}`);
-      console.log(response)
       setEvent(response.data.event);
+      
+      // Check if event is favorited (from localStorage)
+      const favorites = JSON.parse(localStorage.getItem('favoriteEvents') || '[]');
+      setIsFavorited(favorites.includes(id));
     } catch (error) {
+      setError(error.response?.status === 404 ? 'notFound' : 'serverError');
       toast.error('Failed to load event details');
       console.error('Error fetching event:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const shareEvent = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: event.title,
-        text: event.shortDescription,
-        url: window.location.href,
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+  useEffect(() => {
+    fetchEventDetails();
+    
+    // Scroll to top on mount
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [fetchEventDetails]);
+
+  // Memoized date calculations
+  const dateInfo = useMemo(() => {
+    if (!event?.date) return null;
+    
+    const date = new Date(event.date);
+    return {
+      day: date.toLocaleDateString('en-US', { day: '2-digit' }),
+      month: date.toLocaleDateString('en-US', { month: 'short' }),
+      weekday: date.toLocaleDateString('en-US', { weekday: 'short' }),
+      formatted: date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      isPast: date < new Date()
+    };
+  }, [event?.date]);
+
+  // Memoized capacity calculations
+  const capacityInfo = useMemo(() => {
+    if (!event) return null;
+    
+    const availableSeats = event.capacity - event.bookedSeats;
+    const occupancyRate = Math.round((event.bookedSeats / event.capacity) * 100);
+    const isAlmostFull = occupancyRate >= 80;
+    const isSoldOut = availableSeats <= 0;
+    
+    return { availableSeats, occupancyRate, isAlmostFull, isSoldOut };
+  }, [event]);
+
+  // Share event functionality
+  const shareEvent = useCallback(async () => {
+    const shareData = {
+      title: event.title,
+      text: event.shortDescription,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+        toast.success('Event shared successfully!');
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error sharing:', error);
+        toast.error('Failed to share event');
+      }
     }
-  };
+  }, [event]);
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 bg-gradient-to-b from-white to-pink-50">
-        <div className="animate-pulse space-y-12 max-w-4xl mx-auto">
+  // Toggle favorite
+  const toggleFavorite = useCallback(() => {
+    const favorites = JSON.parse(localStorage.getItem('favoriteEvents') || '[]');
+    let newFavorites;
+    
+    if (isFavorited) {
+      newFavorites = favorites.filter(fav => fav !== id);
+      toast.success('Removed from favorites');
+    } else {
+      newFavorites = [...favorites, id];
+      toast.success('Added to favorites');
+    }
+    
+    localStorage.setItem('favoriteEvents', JSON.stringify(newFavorites));
+    setIsFavorited(!isFavorited);
+  }, [isFavorited, id]);
+
+  // Handle image navigation with keyboard
+  const handleImageNavigation = useCallback((direction) => {
+    if (!event?.images?.length) return;
+    
+    setActiveImage(prev => {
+      if (direction === 'next') {
+        return (prev + 1) % event.images.length;
+      }
+      return prev === 0 ? event.images.length - 1 : prev - 1;
+    });
+  }, [event?.images?.length]);
+
+  // Keyboard navigation for images
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (showReservationModal || showGuestListModal) return;
+      
+      if (e.key === 'ArrowLeft') handleImageNavigation('prev');
+      if (e.key === 'ArrowRight') handleImageNavigation('next');
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [handleImageNavigation, showReservationModal, showGuestListModal]);
+
+  // Handle reservation button click
+  const handleReservation = useCallback(() => {
+    if (capacityInfo?.isSoldOut) {
+      toast.error('Sorry, this event is sold out');
+      return;
+    }
+    if (dateInfo?.isPast) {
+      toast.error('This event has already passed');
+      return;
+    }
+    setShowReservationModal(true);
+  }, [capacityInfo?.isSoldOut, dateInfo?.isPast]);
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="min-h-screen bg-gray-950">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-pulse delay-500" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative">
+        <div className="animate-pulse space-y-12">
           <div className="flex items-center justify-between">
-            <div className="h-10 bg-gray-200 rounded-xl w-48"></div>
+            <div className="h-10 bg-purple-900/40 rounded-xl w-48"></div>
             <div className="flex gap-2">
-              <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
-              <div className="h-12 w-12 bg-gray-200 rounded-full"></div>
+              <div className="h-12 w-12 bg-purple-900/40 rounded-2xl"></div>
+              <div className="h-12 w-12 bg-purple-900/40 rounded-2xl"></div>
             </div>
           </div>
-          <div className="h-96 bg-gradient-to-r from-gray-200 to-gray-300 rounded-3xl"></div>
+          <div className="h-96 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 rounded-3xl"></div>
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div className="space-y-3">
-                <div className="h-8 bg-gray-200 rounded-xl w-3/4"></div>
-                <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-8 bg-purple-900/40 rounded-xl w-3/4"></div>
+                <div className="h-6 bg-purple-900/40 rounded w-1/2"></div>
               </div>
-              <div className="h-64 bg-gradient-to-r from-gray-200 to-gray-300 rounded-2xl"></div>
+              <div className="h-64 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 rounded-2xl"></div>
             </div>
             <div className="space-y-6">
-              <div className="h-80 bg-white rounded-3xl p-6 space-y-4">
-                <div className="h-6 bg-gray-200 rounded-xl"></div>
-                <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-                <div className="space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-full"></div>
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                </div>
-                <div className="space-y-4">
-                  <div className="h-12 bg-gray-200 rounded-2xl"></div>
-                  <div className="h-12 bg-gray-200 rounded-2xl"></div>
-                </div>
+              <div className="h-80 bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 rounded-3xl"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = ({ type }) => {
+    const isNotFound = type === 'notFound';
+    
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        </div>
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
+          <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-12 lg:p-16 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+            
+            <div className="relative">
+              <div className="inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 mb-8">
+                {isNotFound ? (
+                  <CalendarDaysIcon className="h-10 w-10 md:h-12 md:w-12" />
+                ) : (
+                  <ExclamationTriangleIcon className="h-10 w-10 md:h-12 md:w-12" />
+                )}
+              </div>
+              <h3 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-6">
+                {isNotFound ? 'Event Not Found' : 'Something Went Wrong'}
+              </h3>
+              <p className="text-xl text-gray-400 mb-10 leading-relaxed max-w-md mx-auto">
+                {isNotFound 
+                  ? "The event you're looking for doesn't exist or has been removed."
+                  : "We couldn't load the event details. Please try again."}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                {!isNotFound && (
+                  <button
+                    onClick={fetchEventDetails}
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105"
+                  >
+                    Try Again
+                  </button>
+                )}
+                <Link 
+                  to="/events" 
+                  className="group inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-4 text-lg font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105"
+                >
+                  <ArrowLeftIcon className="h-5 w-5" />
+                  Browse All Events
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </div>
     );
-  }
+  };
 
-  if (!event) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center bg-gradient-to-b from-white to-pink-50">
-        <div className="max-w-md mx-auto bg-white rounded-3xl p-12 shadow-2xl border border-gray-100">
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-pink-50 mb-8 shadow-lg">
-            <CalendarDaysIcon className="h-12 w-12 text-pink-500" />
-          </div>
-          <h3 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4 bg-gradient-to-r from-gray-900 to-pink-600 bg-clip-text">
-            Event Not Found
-          </h3>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-md mx-auto">
-            The event you're looking for doesn't exist or has been removed.
-          </p>
-          <Link 
-            to="/events" 
-            className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-xl font-bold text-white rounded-2xl shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300"
-          >
-            <ArrowLeftIcon className="h-6 w-6 mr-3" />
-            Browse All Events
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Render loading state
+  if (loading) return <LoadingSkeleton />;
 
-  const date = new Date(event.date);
-  const formattedDate = date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  // Render error state
+  if (error) return <ErrorState type={error} />;
 
-  const availableSeats = event.capacity - event.bookedSeats;
-  const occupancyRate = Math.round((event.bookedSeats / event.capacity) * 100);
+  // Render not found state
+  if (!event) return <ErrorState type="notFound" />;
+
+  const images = event.images || [event.featuredImage || event.image || 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg'];
 
   return (
     <>
-      <div className="bg-white min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
-          <div className="mb-12 lg:mb-16">
-            <Link
-              to="/events"
-              className="inline-flex items-center text-gray-600 hover:text-pink-600 font-semibold mb-8 lg:mb-12 px-4 py-2 bg-white/50 hover:bg-pink-50 rounded-2xl border border-gray-200 hover:border-pink-200 transition-all duration-300 shadow-sm"
-            >
-              <ArrowLeftIcon className="h-5 w-5 mr-2" />
-              Back to Events
-            </Link>
-            
-            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
-              <div className="flex-1">
-                <div className="flex flex-wrap items-center gap-3 mb-8 lg:mb-12">
-                  <span className="px-4 py-2 bg-gradient-to-r from-pink-100 to-purple-100 text-pink-700 text-sm font-bold rounded-2xl border border-pink-200">
-                    {event.category}
-                  </span>
-                  {event.isFeatured && (
-                    <span className="px-4 py-2 bg-gradient-to-r from-yellow-100 to-pink-100 text-yellow-700 text-sm font-bold rounded-2xl border border-yellow-200 shadow-sm">
-                      ✨ Featured Event
-                    </span>
-                  )}
-                  <span className={`px-4 py-2 text-sm font-bold rounded-2xl border ${
-                    event.status === 'upcoming' ? 'bg-green-100 text-green-800 border-green-200' :
-                    event.status === 'ongoing' ? 'bg-purple-100 text-purple-800 border-purple-200' :
-                    event.status === 'completed' ? 'bg-gray-100 text-gray-800 border-gray-200' : 'bg-pink-100 text-pink-800 border-pink-200'
-                  }`}>
-                    {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                  </span>
-                </div>
-                <h1 className="text-4xl lg:text-5xl xl:text-6xl font-black text-gray-900 mb-6 leading-tight bg-gradient-to-r from-gray-900 via-pink-600 to-purple-600 bg-clip-text">
-                  {event.title}
-                </h1>
-                <p className="text-xl lg:text-2xl text-gray-600 mb-0 leading-relaxed max-w-3xl">
-                  {event.shortDescription}
-                </p>
-              </div>
+      <div className="min-h-screen bg-gray-950">
+        {/* Background effects */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-pulse delay-500" />
+        </div>
+
+        <div className="relative">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
+            {/* Header Section */}
+            <div className="mb-8 lg:mb-12">
+              <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center text-purple-300 hover:text-purple-200 font-semibold mb-6 lg:mb-8 px-4 py-2 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 transition-all duration-300"
+                aria-label="Go back"
+              >
+                <ArrowLeftIcon className="h-5 w-5 mr-2" />
+                Back
+              </button>
               
-              <div className="flex items-center gap-3 lg:self-start">
-                <button
-                  onClick={shareEvent}
-                  className="group p-4 bg-white/70 hover:bg-white rounded-2xl border border-gray-200 hover:border-pink-300 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1"
-                  title="Share event"
-                >
-                  <ShareIcon className="h-6 w-6 text-gray-700 group-hover:text-pink-500 transition-colors" />
-                </button>
-                <button className="group p-4 bg-gradient-to-br from-pink-50 to-purple-50 border border-pink-200 hover:border-pink-400 shadow-lg hover:shadow-2xl rounded-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1">
-                  <HeartIcon className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition-colors" />
-                </button>
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                <div className="flex-1">
+                  {/* Tags and Status */}
+                  <div className="flex flex-wrap items-center gap-3 mb-6">
+                    <span className="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 text-purple-300">
+                      {event.category}
+                    </span>
+                    {event.isFeatured && (
+                      <span className="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/50 flex items-center gap-1">
+                        <StarIcon className="h-3.5 w-3.5" />
+                        Featured
+                      </span>
+                    )}
+                    <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${
+                      event.status === 'upcoming' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 
+                      event.status === 'ongoing' ? 'bg-blue-500/20 text-blue-300 border-blue-500/30' : 
+                      event.status === 'completed' ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 
+                      'bg-pink-500/20 text-pink-300 border-pink-500/30'
+                    }`}>
+                      {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                    </span>
+                    {capacityInfo?.isAlmostFull && !capacityInfo?.isSoldOut && (
+                      <span className="px-4 py-2 rounded-full text-sm font-semibold bg-orange-500/20 text-orange-300 border-orange-500/30 animate-pulse">
+                        Almost Full!
+                      </span>
+                    )}
+                    {capacityInfo?.isSoldOut && (
+                      <span className="px-4 py-2 rounded-full text-sm font-semibold bg-red-500/20 text-red-300 border-red-500/30">
+                        Sold Out
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Title and Description */}
+                  <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4 leading-tight">
+                    {event.title}
+                  </h1>
+                  <p className="text-lg lg:text-xl text-gray-300 leading-relaxed max-w-3xl">
+                    {event.shortDescription}
+                  </p>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3 lg:self-start">
+                  <button
+                    onClick={shareEvent}
+                    className="group p-3 rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/20"
+                    title="Share event"
+                    aria-label="Share event"
+                  >
+                    <ShareIcon className="h-6 w-6 text-gray-400 group-hover:text-purple-300 transition-colors" />
+                  </button>
+                  <button 
+                    onClick={toggleFavorite}
+                    className="group p-3 rounded-2xl bg-gradient-to-br from-purple-600/20 via-pink-600/20 to-purple-600/20 border border-pink-500/30 hover:border-pink-400/50 transition-all duration-300 hover:shadow-xl hover:shadow-pink-500/20"
+                    title={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                    aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    {isFavorited ? (
+                      <HeartIconSolid className="h-6 w-6 text-pink-400 transition-colors" />
+                    ) : (
+                      <HeartIcon className="h-6 w-6 text-pink-400 group-hover:text-pink-300 transition-colors" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
-            <div className="lg:col-span-2 space-y-12">
-              {/* Hero Image Gallery */}
-              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
-                <div className="relative h-96 lg:h-[500px]">
-                  <img
-                    src={event.images?.[activeImage] || event.featuredImage || 'https://images.pexels.com/photos/1699156/pexels-photo-1699156.jpeg'}
-                    alt={event.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-2xl">
-                    {event.images?.map((img, index) => (
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+              {/* Left Column - Images and Details */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* Hero Image Gallery */}
+                <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 overflow-hidden group">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+                  
+                  <div className="relative h-80 lg:h-[450px]">
+                    {imageLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
+                    <img
+                      src={images[activeImage]}
+                      alt={`${event.title} - Image ${activeImage + 1}`}
+                      className="w-full h-full object-cover transition-opacity duration-500"
+                      onLoad={() => setImageLoading(false)}
+                      onError={(e) => {
+                        e.target.src = 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg';
+                        setImageLoading(false);
+                      }}
+                      loading="eager"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent" />
+                    
+                    {/* Date Badge */}
+                    <div className="absolute top-4 left-4 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 p-3 shadow-lg shadow-purple-500/50">
+                      <span className="text-xs font-medium text-purple-100">{dateInfo?.weekday}</span>
+                      <span className="text-2xl font-bold text-white leading-none">{dateInfo?.day}</span>
+                      <span className="text-xs font-medium text-purple-100">{dateInfo?.month}</span>
+                    </div>
+                    
+                    {/* Navigation Arrows for Desktop */}
+                    {images.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => handleImageNavigation('prev')}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300"
+                          aria-label="Previous image"
+                        >
+                          <ArrowLeftIcon className="h-6 w-6" />
+                        </button>
+                        <button
+                          onClick={() => handleImageNavigation('next')}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300"
+                          aria-label="Next image"
+                        >
+                          <ArrowLeftIcon className="h-6 w-6 rotate-180" />
+                        </button>
+                      </>
+                    )}
+                    
+                    {/* Image Indicators */}
+                    {images.length > 1 && (
+                      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-2xl">
+                        {images.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setActiveImage(index)}
+                            className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                              activeImage === index ? 'bg-white scale-125 shadow-lg' : 'bg-white/60 hover:bg-white'
+                            }`}
+                            aria-label={`View image ${index + 1}`}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Thumbnail Gallery */}
+                {images.length > 1 && (
+                  <div className="grid grid-cols-4 gap-3">
+                    {images.slice(0, 4).map((img, index) => (
                       <button
                         key={index}
                         onClick={() => setActiveImage(index)}
-                        className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                          activeImage === index ? 'bg-white scale-125 shadow-lg' : 'bg-white/60 hover:bg-white'
+                        className={`group relative h-24 lg:h-28 rounded-2xl overflow-hidden border-4 transition-all duration-300 ${
+                          activeImage === index 
+                            ? 'border-purple-400 ring-4 ring-purple-500/20 shadow-2xl scale-105' 
+                            : 'border-transparent hover:border-purple-300 hover:shadow-xl'
                         }`}
-                      />
+                        aria-label={`View image ${index + 1}`}
+                      >
+                        <img
+                          src={img}
+                          alt={`${event.title} thumbnail ${index + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        {activeImage === index && (
+                          <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent" />
+                        )}
+                      </button>
                     ))}
                   </div>
-                </div>
-              </div>
+                )}
 
-              {event.images && event.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-4">
-                  {event.images.slice(0, 4).map((img, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setActiveImage(index)}
-                      className={`group relative h-28 lg:h-32 rounded-2xl overflow-hidden border-4 transition-all duration-300 shadow-lg ${
-                        activeImage === index 
-                          ? 'border-pink-500 ring-4 ring-pink-100/50 shadow-2xl scale-105' 
-                          : 'border-transparent hover:border-pink-200 hover:shadow-xl hover:scale-102'
-                      }`}
-                    >
-                      <img
-                        src={img}
-                        alt={`${event.title} ${index + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      {activeImage === index && (
-                        <div className="absolute inset-0 bg-gradient-to-t from-pink-500/20 to-transparent" />
-                      )}
-                    </button>
-                  ))}
+                {/* Event Description */}
+                <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 lg:p-10 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+                  
+                  <div className="relative">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-6">
+                      About This Event
+                    </h2>
+                    <div className="text-gray-300 leading-relaxed space-y-4">
+                      {event.description.split('\n').filter(p => p.trim()).map((paragraph, index) => (
+                        <p key={index} className="text-base lg:text-lg">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {/* Event Description */}
-              <div className="bg-white rounded-3xl shadow-2xl p-10 lg:p-12 border border-gray-100">
-                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 flex items-center gap-4">
-                  <span className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-2xl text-xl font-black">Details</span>
-                </h2>
-                <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-                  {event.description.split('\n').map((paragraph, index) => (
-                    <p key={index} className="mb-8 text-lg lg:text-xl text-gray-700">
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              {/* Organizer Info */}
-              <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-3xl p-10 lg:p-12 shadow-xl border border-pink-100">
-                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 flex items-center gap-4">
-                  <BuildingOffice2Icon className="h-12 w-12 text-purple-500" />
-                  Organizer
-                </h2>
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-6">{event.organizer}</h3>
+                {/* Organizer Info */}
+                <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 lg:p-10 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+                  
+                  <div className="relative">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-6 flex items-center gap-3">
+                      <BuildingOffice2Icon className="h-8 w-8 text-purple-400" />
+                      Organized By
+                    </h2>
                     <div className="space-y-4">
-                      <a 
-                        href={`mailto:${event.contactEmail}`}
-                        className="flex items-center text-xl text-gray-700 hover:text-purple-600 font-semibold transition-colors p-4 bg-purple-50 rounded-xl hover:bg-purple-100"
-                      >
-                        <EnvelopeIcon className="h-6 w-6 mr-4 text-purple-500" />
-                        {event.contactEmail}
-                      </a>
-                      <a 
-                        href={`tel:${event.contactPhone}`}
-                        className="flex items-center text-xl text-gray-700 hover:text-pink-600 font-semibold transition-colors p-4 bg-pink-50 rounded-xl hover:bg-pink-100"
-                      >
-                        <PhoneIcon className="h-6 w-6 mr-4 text-pink-500" />
-                        {event.contactPhone}
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sidebar - Event Info & Actions */}
-            <div className="lg:sticky lg:top-24 h-fit space-y-8">
-              <div className="bg-white rounded-3xl shadow-2xl p-8 lg:p-10 border border-gray-100">
-                <h3 className="text-3xl font-bold text-gray-900 mb-8 bg-gradient-to-r from-gray-900 to-pink-600 bg-clip-text">
-                  Quick Info
-                </h3>
-
-                <div className="space-y-6 mb-10">
-                  <div className="group p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border border-pink-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-start space-x-4 mb-2">
-                      <div className="p-3 bg-pink-500 rounded-2xl shadow-lg">
-                        <CalendarDaysIcon className="h-7 w-7 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-500 uppercase tracking-wide">Date</p>
-                        <p className="text-2xl font-bold text-gray-900 leading-tight">{formattedDate}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group p-6 bg-gradient-to-r from-purple-50 to-sky-50 rounded-2xl border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-start space-x-4 mb-2">
-                      <div className="p-3 bg-purple-500 rounded-2xl shadow-lg">
-                        <ClockIcon className="h-7 w-7 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-500 uppercase tracking-wide">Time</p>
-                        <p className="text-2xl font-bold text-gray-900 leading-tight">{event.time}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group p-6 bg-gradient-to-r from-sky-50 to-blue-50 rounded-2xl border border-sky-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-start space-x-4 mb-2">
-                      <div className="p-3 bg-sky-500 rounded-2xl shadow-lg">
-                        <MapPinIcon className="h-7 w-7 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-500 uppercase tracking-wide">Venue</p>
-                        <p className="text-xl font-bold text-gray-900 mb-1">{event.venue}</p>
-                        <p className="text-lg text-gray-700">{event.location}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="group p-6 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border border-yellow-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div className="flex items-start space-x-4 mb-2">
-                      <div className="p-3 bg-yellow-500 rounded-2xl shadow-lg">
-                        <UserGroupIcon className="h-7 w-7 text-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-500 uppercase tracking-wide">Availability</p>
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-lg mb-2">
-                            <span className="font-bold text-green-600">{availableSeats} seats left</span>
-                            <span className="font-bold text-gray-600">{occupancyRate}% booked</span>
-                          </div>
-                          <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
-                            <div 
-                              className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-pink-500 shadow-lg"
-                              style={{ width: `${occupancyRate}%` }}
-                            />
-                          </div>
+                      <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30">
+                        <h3 className="text-xl font-bold text-white mb-5">{event.organizer}</h3>
+                        <div className="space-y-3">
+                          <a 
+                            href={`mailto:${event.contactEmail}`}
+                            className="flex items-center text-base lg:text-lg text-purple-300 hover:text-purple-200 font-semibold transition-colors p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 hover:from-purple-900/30 hover:to-pink-900/30"
+                          >
+                            <EnvelopeIcon className="h-5 w-5 mr-3 text-purple-400 flex-shrink-0" />
+                            <span className="truncate">{event.contactEmail}</span>
+                          </a>
+                          <a 
+                            href={`tel:${event.contactPhone}`}
+                            className="flex items-center text-base lg:text-lg text-purple-300 hover:text-purple-200 font-semibold transition-colors p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 hover:from-purple-900/30 hover:to-pink-900/30"
+                          >
+                            <PhoneIcon className="h-5 w-5 mr-3 text-purple-400 flex-shrink-0" />
+                            {event.contactPhone}
+                          </a>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                {/* Price & What's Included */}
-                <div className="bg-gradient-to-br from-yellow-400 via-pink-400 to-purple-500 text-white rounded-3xl p-10 mb-10 shadow-2xl text-center">
-                  <div className="text-5xl lg:text-6xl font-black mb-4 drop-shadow-lg">
-                    AED {event.price}
-                  </div>
-                  <p className="text-xl opacity-95 mb-8">Per person</p>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center justify-center gap-2 p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                      <CheckBadgeIcon className="h-5 w-5" />
-                      All sessions included
-                    </div>
-                    <div className="flex items-center justify-center gap-2 p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                      <CheckBadgeIcon className="h-5 w-5" />
-                      Networking access
-                    </div>
-                    <div className="flex items-center justify-center gap-2 p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                      <CheckBadgeIcon className="h-5 w-5" />
-                      Refreshments
-                    </div>
-                    <div className="flex items-center justify-center gap-2 p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-                      <CheckBadgeIcon className="h-5 w-5" />
-                      Event materials
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-4">
-                  <button
-                    onClick={() => setShowReservationModal(true)}
-                    className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-sky-500 hover:from-pink-600 hover:via-purple-600 hover:to-sky-600 text-white font-black py-5 px-8 rounded-3xl shadow-2xl hover:shadow-3xl transform hover:-translate-y-2 transition-all duration-300 text-xl flex items-center justify-center gap-3"
-                  >
-                    <TicketIcon className="h-7 w-7" />
-                    🎉 Reserve Your Spot Now
-                  </button>
-                  <button
-                    onClick={() => setShowGuestListModal(true)}
-                    className="w-full bg-white border-2 border-pink-300 hover:border-purple-400 text-pink-600 hover:text-purple-600 font-bold py-4 px-8 rounded-2xl shadow-xl hover:shadow-2xl hover:bg-gradient-to-r hover:from-pink-50 hover:to-purple-50 transition-all duration-300 text-lg flex items-center justify-center gap-3"
-                  >
-                    👥 Join Guest List
-                  </button>
-                </div>
-
-                <div className="mt-10 pt-8 border-t border-gray-200 text-center">
-                  <p className="text-lg text-gray-600 mb-2">
-                    Need help? Call us directly:
-                  </p>
-                  <a 
-                    href={`tel:${event.contactPhone}`} 
-                    className="inline-flex items-center text-xl font-bold text-pink-600 hover:text-pink-700 transition-colors gap-2"
-                  >
-                    📞 {event.contactPhone}
-                  </a>
-                </div>
               </div>
 
-              {/* Tags */}
-              <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-3xl p-8 shadow-lg border border-pink-100">
-                <h4 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <span className="w-2 h-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse"></span>
-                  Event Tags
-                </h4>
-                <div className="flex flex-wrap gap-3">
-                  {event.tags?.map((tag, index) => (
-                    <span 
-                      key={index}
-                      className="px-6 py-3 bg-white text-gray-700 font-semibold rounded-2xl border border-gray-200 hover:border-pink-300 hover:shadow-md transition-all duration-200 text-sm shadow-sm"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
+              {/* Right Column - Booking Card */}
+              <div className="lg:sticky lg:top-24 h-fit space-y-6">
+                <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 lg:p-8 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+                  
+                  <div className="relative">
+                    <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-6">
+                      Event Details
+                    </h3>
+
+                    <div className="space-y-4 mb-8">
+                      {/* Date */}
+                      <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
+                        <div className="flex items-start space-x-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                            <CalendarDaysIcon className="h-5 w-5 text-purple-300" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Date</p>
+                            <p className="text-base font-bold text-white leading-tight">{dateInfo?.formatted}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Time */}
+                      <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
+                        <div className="flex items-start space-x-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                            <ClockIcon className="h-5 w-5 text-purple-300" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Time</p>
+                            <p className="text-base font-bold text-white leading-tight">{event.time}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Location */}
+                      <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
+                        <div className="flex items-start space-x-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                            <MapPinIcon className="h-5 w-5 text-purple-300" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Venue</p>
+                            <p className="text-base font-bold text-white mb-1">{event.venue}</p>
+                            <p className="text-sm text-gray-300">{event.location}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Capacity */}
+                      <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
+                        <div className="flex items-start space-x-3">
+                          <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                            <UserGroupIcon className="h-5 w-5 text-purple-300" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Availability</p>
+                            <div className="space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className={`font-bold ${capacityInfo?.isSoldOut ? 'text-red-400' : 'text-green-400'}`}>
+                                  {capacityInfo?.isSoldOut ? 'Sold Out' : `${capacityInfo?.availableSeats} seats left`}
+                                </span>
+                                <span className="font-bold text-gray-300">{capacityInfo?.occupancyRate}% booked</span>
+                              </div>
+                              <div className="h-2 rounded-full overflow-hidden shadow-inner bg-gray-800/50">
+                                <div 
+                                  className={`h-full transition-all duration-500 ${
+                                    capacityInfo?.isSoldOut ? 'bg-gradient-to-r from-red-500 to-pink-500' :
+                                    capacityInfo?.isAlmostFull ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                    'bg-gradient-to-r from-green-500 to-emerald-500'
+                                  }`}
+                                  style={{ width: `${capacityInfo?.occupancyRate}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Price Card */}
+                    <div className="relative rounded-3xl bg-gradient-to-br from-purple-600 via-pink-600 to-purple-500 text-white p-8 mb-8 overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/80 via-pink-600/80 to-purple-500/80" />
+                      
+                      <div className="relative">
+                        <div className="text-4xl lg:text-5xl font-black mb-3 drop-shadow-lg">
+                          AED {event.price}
+                        </div>
+                        <p className="text-lg opacity-95 mb-6">Per person</p>
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-center gap-2 p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-xs">All sessions</span>
+                          </div>
+                          <div className="flex items-center gap-2 p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-xs">Networking</span>
+                          </div>
+                          <div className="flex items-center gap-2 p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-xs">Refreshments</span>
+                          </div>
+                          <div className="flex items-center gap-2 p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                            <CheckBadgeIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-xs">Materials</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      <button
+                        onClick={handleReservation}
+                        disabled={capacityInfo?.isSoldOut || dateInfo?.isPast}
+                        className={`w-full group relative inline-flex items-center justify-center gap-2 rounded-full px-6 py-4 text-base font-semibold text-white transition-all duration-300 ${
+                          capacityInfo?.isSoldOut || dateInfo?.isPast
+                            ? 'bg-gray-600 cursor-not-allowed opacity-50'
+                            : 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 hover:scale-105'
+                        }`}
+                      >
+                        <TicketIcon className="h-5 w-5" />
+                        {capacityInfo?.isSoldOut ? 'Sold Out' : dateInfo?.isPast ? 'Event Passed' : 'Reserve Your Spot'}
+                        {!capacityInfo?.isSoldOut && !dateInfo?.isPast && (
+                          <svg className="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setShowGuestListModal(true)}
+                        className="w-full py-3 px-6 border-2 border-purple-500/30 text-purple-300 font-semibold rounded-2xl hover:border-purple-400/50 hover:bg-white/5 transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+                      >
+                        <UserGroupIcon className="h-5 w-5" />
+                        Join Guest List
+                      </button>
+                    </div>
+
+                    {/* Contact Info */}
+                    <div className="mt-8 pt-6 border-t border-purple-500/20 text-center">
+                      <p className="text-sm text-gray-400 mb-2">
+                        Questions? Contact us:
+                      </p>
+                      <a 
+                        href={`tel:${event.contactPhone}`} 
+                        className="inline-flex items-center text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-300 hover:to-pink-300 transition-all duration-300 gap-2"
+                      >
+                        <PhoneIcon className="h-5 w-5 text-purple-400" />
+                        {event.contactPhone}
+                      </a>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Tags */}
+                {event.tags && event.tags.length > 0 && (
+                  <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+                    
+                    <div className="relative">
+                      <h4 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4">
+                        Tags
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {event.tags.map((tag, index) => (
+                          <span 
+                            key={index}
+                            className="px-3 py-1.5 rounded-xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 text-purple-300 font-semibold hover:border-purple-400/50 transition-all duration-200 text-sm"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
+
+        {/* Modals */}
+        {showReservationModal && (
+          <ReservationModal
+            event={event}
+            onClose={() => setShowReservationModal(false)}
+          />
+        )}
+
+        {showGuestListModal && (
+          <GuestListModal
+            event={event}
+            onClose={() => setShowGuestListModal(false)}
+          />
+        )}
       </div>
-
-      {showReservationModal && (
-        <ReservationModal
-          event={event}
-          onClose={() => setShowReservationModal(false)}
-        />
-      )}
-
-      {showGuestListModal && (
-        <GuestListModal
-          event={event}
-          onClose={() => setShowGuestListModal(false)}
-        />
-      )}
     </>
   );
 };

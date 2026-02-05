@@ -21,83 +21,111 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className="glass-effect sticky top-0 z-50 shadow-lg">
+    <nav className="sticky top-0 z-50 bg-gray-950/95 backdrop-blur-lg border-b border-purple-500/20 shadow-lg shadow-purple-500/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
+          {/* Logo Section */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-dubai-blue to-dubai-gold p-2 rounded-lg">
-                <CalendarDaysIcon className="h-8 w-8 text-white" />
+            <Link to="/" className="flex items-center space-x-3 group">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 p-2.5 rounded-xl shadow-lg shadow-purple-500/50">
+                  <CalendarDaysIcon className="h-7 w-7 text-white" />
+                </div>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gradient">Eventra Dubai</h1>
-                <p className="text-xs text-gray-600">Premier Event Management</p>
+                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white group-hover:from-purple-400 group-hover:via-pink-400 group-hover:to-purple-400 transition-all duration-300">
+                  Eventra Dubai
+                </h1>
+                <p className="text-xs text-purple-300/80">Your Gateway to Nightlife</p>
               </div>
             </Link>
           </div>
 
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                className={`group relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   location.pathname === item.path
-                    ? 'text-dubai-blue bg-blue-50'
-                    : 'text-gray-700 hover:text-dubai-blue hover:bg-blue-50'
+                    ? 'text-white bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30'
+                    : 'text-gray-300 hover:text-white hover:bg-purple-600/10'
                 }`}
               >
-                {item.icon}
+                <div className={`transition-transform duration-300 ${
+                  location.pathname === item.path ? 'scale-110' : 'group-hover:scale-110'
+                }`}>
+                  {item.icon}
+                </div>
                 <span>{item.name}</span>
+                {location.pathname === item.path && (
+                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" />
+                )}
               </Link>
             ))}
+            
             <Link
               to="/admin/login"
-              className="btn-primary text-sm py-2 px-4"
+              className="relative ml-4 group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105"
             >
-              Admin Portal
+              <span>Admin Portal</span>
+              <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
             </Link>
           </div>
 
+          {/* Mobile Menu Button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700 hover:text-dubai-blue focus:outline-none"
+              className="relative text-gray-300 hover:text-white focus:outline-none p-2 rounded-lg hover:bg-purple-600/10 transition-colors duration-300"
             >
               {isOpen ? (
-                <XMarkIcon className="h-8 w-8" />
+                <XMarkIcon className="h-7 w-7" />
               ) : (
-                <Bars3Icon className="h-8 w-8" />
+                <Bars3Icon className="h-7 w-7" />
               )}
             </button>
           </div>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white border-t">
-          <div className="px-2 pt-2 pb-3 space-y-1">
+        <div className="md:hidden bg-gray-900/95 backdrop-blur-lg border-t border-purple-500/20">
+          <div className="px-4 pt-2 pb-4 space-y-2">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center space-x-2 px-3 py-3 rounded-md text-base font-medium ${
+                className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-base font-medium transition-all duration-300 ${
                   location.pathname === item.path
-                    ? 'text-dubai-blue bg-blue-50'
-                    : 'text-gray-700 hover:text-dubai-blue hover:bg-blue-50'
+                    ? 'text-white bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-500/30 shadow-lg shadow-purple-500/20'
+                    : 'text-gray-300 hover:text-white hover:bg-purple-600/10'
                 }`}
                 onClick={() => setIsOpen(false)}
               >
-                {item.icon}
+                <div className={`transition-transform duration-300 ${
+                  location.pathname === item.path ? 'scale-110 text-purple-400' : ''
+                }`}>
+                  {item.icon}
+                </div>
                 <span>{item.name}</span>
               </Link>
             ))}
+            
             <Link
               to="/admin/login"
-              className="flex items-center justify-center mt-4 btn-primary"
+              className="flex items-center justify-center mt-4 gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-purple-500/50"
               onClick={() => setIsOpen(false)}
             >
-              Admin Portal
+              <span>Admin Portal</span>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
             </Link>
           </div>
         </div>

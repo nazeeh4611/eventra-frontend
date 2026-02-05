@@ -6,12 +6,7 @@ import toast from 'react-hot-toast';
 const GuestListModal = ({ event, onClose }) => {
   const [formData, setFormData] = useState({
     guestName: '',
-    email: '',
-    phone: '',
-    company: '',
-    position: '',
-    plusOnes: 0,
-    notes: ''
+    phone: ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -46,37 +41,38 @@ const GuestListModal = ({ event, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
+      <div className="relative rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 max-w-sm w-full overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+        
+        <div className="relative p-6">
           <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-dubai-gold/10 rounded-lg">
-                <UserPlusIcon className="h-6 w-6 text-dubai-gold" />
+            <div className="flex items-center space-x-2">
+              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
+                <UserPlusIcon className="h-5 w-5 text-purple-300" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-white">
                   Join Guest List
                 </h2>
-                <p className="text-sm text-gray-600">{event.title}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1 hover:bg-white/5 rounded-lg transition-colors"
             >
-              <XMarkIcon className="h-6 w-6 text-gray-500" />
+              <XMarkIcon className="h-5 w-5 text-gray-400" />
             </button>
           </div>
 
-          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-            <p className="text-gray-700">
-              Joining the guest list gives you priority access, special offers, and exclusive updates about this event.
+          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30">
+            <p className="text-sm text-gray-300">
+              Get priority access and special offers
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-medium text-gray-300 mb-1">
                 Full Name *
               </label>
               <input
@@ -85,126 +81,42 @@ const GuestListModal = ({ event, onClose }) => {
                 value={formData.guestName}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
                 placeholder="Enter your full name"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                  placeholder="email@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone *
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                  placeholder="+971 50 123 4567"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company
-                </label>
-                <input
-                  type="text"
-                  name="company"
-                  value={formData.company}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                  placeholder="Your company"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Position
-                </label>
-                <input
-                  type="text"
-                  name="position"
-                  value={formData.position}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                  placeholder="Your position"
-                />
-              </div>
-            </div>
-
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Plus Ones
+              <label className="block text-xs font-medium text-gray-300 mb-1">
+                Phone Number *
               </label>
-              <select
-                name="plusOnes"
-                value={formData.plusOnes}
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-              >
-                {[0, 1, 2, 3, 4, 5].map(num => (
-                  <option key={num} value={num}>
-                    {num} Guest{num !== 1 ? 's' : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Additional Notes
-              </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
-                rows="3"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                placeholder="Any special requirements or dietary restrictions..."
+                required
+                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
+                placeholder="+971 50 123 4567"
               />
             </div>
 
-            <div className="flex space-x-3 pt-4">
+            <div className="flex space-x-2 pt-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition duration-300"
+                className="flex-1 py-2.5 px-4 border border-purple-500/30 text-gray-300 text-sm font-semibold rounded-xl hover:bg-white/5 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 btn-secondary disabled:opacity-50"
+                className="flex-1 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-200 disabled:opacity-50"
               >
-                {loading ? 'Adding...' : 'Join Guest List'}
+                {loading ? 'Adding...' : 'Join'}
               </button>
             </div>
-
-            <p className="text-xs text-gray-500 text-center mt-4">
-              Your information will be added to the event guest list. 
-              The organizer may contact you with updates.
-            </p>
           </form>
         </div>
       </div>
