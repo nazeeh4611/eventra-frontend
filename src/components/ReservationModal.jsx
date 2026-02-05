@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { XMarkIcon, TicketIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import baseurl from '../Base/base';
 
 const ReservationModal = ({ event, onClose }) => {
   const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ const ReservationModal = ({ event, onClose }) => {
         eventId: event._id
       };
 
-      await axios.post('http://localhost:5000/api/reservations', reservationData);
+      await axios.post(`${baseurl}/reservations`, reservationData);
 
       const whatsappMessage = `New Reservation for ${event.title}%0A%0A` +
         `Name: ${formData.fullName}%0A` +

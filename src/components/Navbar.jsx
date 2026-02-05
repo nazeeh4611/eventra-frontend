@@ -27,18 +27,15 @@ const Navbar = () => {
           {/* Logo Section */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center space-x-3 group">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 p-2.5 rounded-xl shadow-lg shadow-purple-500/50">
-                  <CalendarDaysIcon className="h-7 w-7 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white group-hover:from-purple-400 group-hover:via-pink-400 group-hover:to-purple-400 transition-all duration-300">
-                  Eventra Dubai
-                </h1>
-                <p className="text-xs text-purple-300/80">Your Gateway to Nightlife</p>
-              </div>
+            <img
+  src="/logo.png"
+  alt="Eventra Dubai Logo"
+  className="h-16 w-auto object-contain"
+/>
+          
+
+              
+
             </Link>
           </div>
 

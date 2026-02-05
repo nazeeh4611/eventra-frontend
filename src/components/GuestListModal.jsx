@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { XMarkIcon, UserPlusIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import baseurl from '../Base/base';
 
 const GuestListModal = ({ event, onClose }) => {
   const [formData, setFormData] = useState({
@@ -21,7 +22,7 @@ const GuestListModal = ({ event, onClose }) => {
         eventId: event._id
       };
 
-      await axios.post('http://localhost:5000/api/guestlist', guestData);
+      await axios.post(`${baseurl}/guestlist`, guestData);
       
       toast.success('Added to guest list successfully!');
       onClose();

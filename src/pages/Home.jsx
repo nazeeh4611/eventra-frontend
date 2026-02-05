@@ -23,17 +23,20 @@ const Home = () => {
   const [featuredEvents, setFeaturedEvents] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [carouselEvents, setCarouselEvents] = useState([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const [featuredResponse, upcomingResponse] = await Promise.all([
+        const [featuredResponse, upcomingResponse, carouselResponse] = await Promise.all([
           axios.get(`${baseurl}/events?featured=true&limit=6`),
-          axios.get(`${baseurl}/api/events?status=upcoming&limit=8`),
+          axios.get(`${baseurl}/events?status=upcoming&limit=8`),
+          axios.get(`${baseurl}/events/carousel`)
         ]);
 
         setFeaturedEvents(featuredResponse.data.events || []);
         setUpcomingEvents(upcomingResponse.data.events || []);
+        setCarouselEvents(carouselResponse.data.events || []);
       } catch (error) {
         console.error('Error fetching events:', error);
       } finally {
@@ -53,12 +56,7 @@ const Home = () => {
     { name: 'Entertainment', icon: <FireIcon className="h-8 w-8" />, count: 15, color: 'from-pink-600 to-rose-600' },
   ];
 
-  const stats = [
-    { label: 'Events Hosted', value: '1,250+', icon: <CalendarIcon className="h-6 w-6" /> },
-    { label: 'Happy Attendees', value: '45,000+', icon: <UsersIcon className="h-6 w-6" /> },
-    { label: 'Partner Venues', value: '85+', icon: <MapPinIcon className="h-6 w-6" /> },
-    { label: 'Cities Covered', value: '3', icon: <SparklesIcon className="h-6 w-6" /> },
-  ];
+  const stats = [];
 
   const experienceImages = [
     {
@@ -137,11 +135,11 @@ const Home = () => {
       <div className="relative">
         <section className="pt-8 px-6">
           <div className="container mx-auto max-w-7xl">
-            <EventCarousel />
+            <EventCarousel events={carouselEvents} />
           </div>
         </section>
 
-        <section className="py-20 px-6 relative">
+        {/* <section className="py-20 px-6 relative">
           <div className="container mx-auto max-w-7xl">
             <div className="text-center space-y-4 mb-16">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 backdrop-blur-sm mb-4">
@@ -201,48 +199,9 @@ const Home = () => {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
-        <section className="py-20 px-6">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center space-y-4 mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 backdrop-blur-sm mb-4">
-                <SparklesIcon className="h-4 w-4 text-purple-400" />
-                <span className="text-sm font-semibold text-purple-300">Experience Gallery</span>
-              </div>
-              <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white">
-                Immerse in the Experience
-              </h2>
-              <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
-                Get a glimpse of the unforgettable moments that await you at our premium events
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {experienceImages.map((image, index) => (
-                <div
-                  key={index}
-                  className="group relative h-80 rounded-3xl overflow-hidden border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 hover:scale-105"
-                >
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900 via-purple-900/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
-                  <div className="absolute inset-0 flex flex-col justify-end p-6">
-                    <h3 className="text-2xl font-bold text-white mb-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                      {image.title}
-                    </h3>
-                    <p className="text-gray-300 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
-                      {image.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      
 
         <section className="py-20 px-6">
           <div className="container mx-auto max-w-7xl">
@@ -345,6 +304,47 @@ const Home = () => {
                 ))}
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="py-20 px-6">
+          <div className="container mx-auto max-w-7xl">
+            <div className="text-center space-y-4 mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 backdrop-blur-sm mb-4">
+                <SparklesIcon className="h-4 w-4 text-purple-400" />
+                <span className="text-sm font-semibold text-purple-300">Experience Gallery</span>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white">
+                Immerse in the Experience
+              </h2>
+              <p className="text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+                Get a glimpse of the unforgettable moments that await you at our premium events
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {experienceImages.map((image, index) => (
+                <div
+                  key={index}
+                  className="group relative h-80 rounded-3xl overflow-hidden border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 hover:scale-105"
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900 via-purple-900/50 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-500" />
+                  <div className="absolute inset-0 flex flex-col justify-end p-6">
+                    <h3 className="text-2xl font-bold text-white mb-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
+                      {image.title}
+                    </h3>
+                    <p className="text-gray-300 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                      {image.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
