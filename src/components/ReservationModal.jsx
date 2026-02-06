@@ -30,7 +30,7 @@ const ReservationModal = ({ event, onClose }) => {
         `Phone: ${formData.phone}%0A` +
         `Tickets: ${formData.numberOfTickets}`;
 
-      window.open(`https://wa.me/+971501234567?text=${whatsappMessage}`, '_blank');
+      window.open(`https://wa.me/+971504316900?text=${whatsappMessage}`, '_blank');
 
       toast.success('Reservation submitted successfully!');
       onClose();
