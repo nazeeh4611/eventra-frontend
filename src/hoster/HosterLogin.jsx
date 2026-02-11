@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, Link } from 'react-router-dom';
 import { LockClosedIcon, EnvelopeIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -21,24 +21,10 @@ const HosterLogin = () => {
     } catch {}
   }
 
-  const [isRegister, setIsRegister] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const [loginData, setLoginData] = useState({
     email: '',
     password: ''
-  });
-
-  const [registerData, setRegisterData] = useState({
-    companyName: '',
-    contactPerson: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    address: '',
-    taxNumber: '',
-    website: ''
   });
 
   const handleLoginSubmit = async (e) => {
@@ -62,49 +48,9 @@ const HosterLogin = () => {
     }
   };
 
-  const handleRegisterSubmit = async (e) => {
-    e.preventDefault();
-
-    if (registerData.password !== registerData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await axios.post(`${baseurl}/hoster/register`, registerData);
-
-      toast.success(response.data.message);
-      setIsRegister(false);
-
-      setRegisterData({
-        companyName: '',
-        contactPerson: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
-        address: '',
-        taxNumber: '',
-        website: ''
-      });
-
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (e, formType) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    if (formType === 'login') {
-      setLoginData(prev => ({ ...prev, [name]: value }));
-    } else {
-      setRegisterData(prev => ({ ...prev, [name]: value }));
-    }
+    setLoginData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -119,134 +65,105 @@ const HosterLogin = () => {
           </div>
 
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            {isRegister ? 'Hoster Registration' : 'Hoster Portal'}
+            Hoster Portal
           </h2>
 
           <p className="mt-2 text-sm text-gray-600">
-            {isRegister
-              ? 'Register your company to host events'
-              : 'Sign in to manage your events'}
+            Sign in to manage your events
           </p>
         </div>
 
         <div className="bg-white py-8 px-4 shadow-xl rounded-2xl sm:px-10">
 
-          {isRegister ? (
-            <form className="space-y-6" onSubmit={handleRegisterSubmit}>
-              {/* --- REGISTER FORM (unchanged UI) --- */}
-              <div className="space-y-4">
+          <form className="space-y-6" onSubmit={handleLoginSubmit}>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <EnvelopeIcon className="h-5 w-5 text-gray-400 inline mr-2" />
+                Email Address
+              </label>
+              <input
+                name="email"
+                type="email"
+                required
+                value={loginData.email}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="company@email.com"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Company Name *
-                  </label>
-                  <input
-                    name="companyName"
-                    type="text"
-                    required
-                    value={registerData.companyName}
-                    onChange={(e) => handleInputChange(e, 'register')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Your company name"
-                  />
-                </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <LockClosedIcon className="h-5 w-5 text-gray-400 inline mr-2" />
+                Password
+              </label>
+              <input
+                name="password"
+                type="password"
+                required
+                value={loginData.password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="••••••••"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Contact Person *
-                  </label>
-                  <input
-                    name="contactPerson"
-                    type="text"
-                    required
-                    value={registerData.contactPerson}
-                    onChange={(e) => handleInputChange(e, 'register')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Full name"
-                  />
-                </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+            >
+              {loading ? 'Signing in...' : 'Sign In'}
+            </button>
 
-                {/* rest of your register fields unchanged */}
-              </div>
-
-              <div className="flex space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setIsRegister(false)}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
-                  Back to Login
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-                >
-                  {loading ? 'Registering...' : 'Register'}
-                </button>
-              </div>
-            </form>
-
-          ) : (
-
-            <form className="space-y-6" onSubmit={handleLoginSubmit}>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <EnvelopeIcon className="h-5 w-5 text-gray-400 inline mr-2" />
-                  Email Address
-                </label>
-
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  value={loginData.email}
-                  onChange={(e) => handleInputChange(e, 'login')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="company@email.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <LockClosedIcon className="h-5 w-5 text-gray-400 inline mr-2" />
-                  Password
-                </label>
-
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  value={loginData.password}
-                  onChange={(e) => handleInputChange(e, 'login')}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  placeholder="••••••••"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+            <div className="text-center">
+              <Link
+                to="/hoster/register"
+                className="text-sm text-green-600 hover:text-green-700"
               >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
+                Don't have an account? Register here
+              </Link>
+            </div>
 
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setIsRegister(true)}
-                  className="text-sm text-green-600 hover:text-green-700"
-                >
-                  Don't have an account? Register here
-                </button>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
               </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">
+                  Need help?
+                </span>
+              </div>
+            </div>
 
-            </form>
-          )}
+            <div className="text-center text-sm text-gray-500">
+              <Link to="/forgot-password" className="text-green-600 hover:text-green-500">
+                Forgot your password?
+              </Link>
+            </div>
+          </form>
 
+          {/* Approval Notice for Pending Accounts */}
+          <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-yellow-800">
+                  Account Pending?
+                </h3>
+                <div className="mt-2 text-sm text-yellow-700">
+                  <p>
+                    If you've registered but can't log in, your account is still under review.
+                    You'll receive an email once approved.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

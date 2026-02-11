@@ -2,6 +2,7 @@ import React from 'react';
 import { Route, Navigate } from 'react-router-dom';
 
 import HosterLogin from '../hoster/HosterLogin';
+import HosterRegister from '../hoster/HosterRegister'; // Fixed import path
 import HosterLayout from '../hoster/HosterLayout';
 import HosterDashboard from '../hoster/HosterDashboard';
 import HosterEvents from '../hoster/HosterEvents';
@@ -14,6 +15,7 @@ import HosterProtectedRoute from '../hoster/HosterProtectRoute';
 const HosterRoutes = (
   <>
     <Route path="/hoster/login" element={<HosterLogin />} />
+    <Route path="/hoster/register" element={<HosterRegister />} />
 
     <Route
       path="/hoster"
