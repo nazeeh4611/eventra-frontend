@@ -55,7 +55,7 @@ const EventCarousel = () => {
 
   const fetchCarouselEvents = async () => {
     try {
-      const res = await axios.get(`${baseurl}/events/carousel`);
+      const res = await axios.get(`${baseurl}/carousel`);
       setEvents(res.data.events || []);
     } catch {
       setEvents([]);
