@@ -5,7 +5,8 @@ import {
   ShieldCheckIcon, 
   BuildingOfficeIcon,
   PhoneIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -19,6 +20,7 @@ const HosterSettings = () => {
     contactPerson: '',
     email: '',
     phone: '',
+    whatsappNumber: '',
     address: {},
     taxNumber: '',
     website: ''
@@ -42,6 +44,7 @@ const HosterSettings = () => {
       setProfile(response.data.hoster);
     } catch (error) {
       console.error('Error fetching profile:', error);
+      toast.error('Failed to load profile');
     }
   };
 
@@ -50,12 +53,13 @@ const HosterSettings = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('hosterToken');
-      await axios.put(`${baseurl}/hoster/profile`, profile, {
+      const response = await axios.put(`${baseurl}/hoster/profile`, profile, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      setProfile(response.data.hoster);
       toast.success('Profile updated successfully');
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error(error.response?.data?.error || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -67,10 +71,17 @@ const HosterSettings = () => {
       toast.error('New passwords do not match');
       return;
     }
+    if (passwordData.newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
     setLoading(true);
     try {
       const token = localStorage.getItem('hosterToken');
-      await axios.put(`${baseurl}/hoster/profile`, passwordData, {
+      await axios.put(`${baseurl}/hoster/profile`, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success('Password updated successfully');
@@ -80,7 +91,7 @@ const HosterSettings = () => {
         confirmPassword: ''
       });
     } catch (error) {
-      toast.error('Failed to update password');
+      toast.error(error.response?.data?.error || 'Failed to update password');
     } finally {
       setLoading(false);
     }
@@ -129,9 +140,9 @@ const HosterSettings = () => {
                     </label>
                     <input
                       type="text"
-                      value={profile.contactPerson}
+                      value={profile.contactPerson || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, contactPerson: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     />
                   </div>
@@ -141,9 +152,9 @@ const HosterSettings = () => {
                     </label>
                     <input
                       type="email"
-                      value={profile.email}
+                      value={profile.email || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     />
                   </div>
@@ -153,11 +164,27 @@ const HosterSettings = () => {
                     </label>
                     <input
                       type="tel"
-                      value={profile.phone}
+                      value={profile.phone || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      WhatsApp Number
+                    </label>
+                    <div className="relative">
+                      <ChatBubbleLeftRightIcon className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+                      <input
+                        type="tel"
+                        value={profile.whatsappNumber || ''}
+                        onChange={(e) => setProfile(prev => ({ ...prev, whatsappNumber: e.target.value }))}
+                        className="w-full pl-10 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        placeholder="+1234567890"
+                      />
+                    </div>
+                    <p className="text-sm text-gray-500 mt-1">Include country code (e.g., +1 for US)</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -167,28 +194,28 @@ const HosterSettings = () => {
                       type="text"
                       value={profile.taxNumber || ''}
                       onChange={(e) => setProfile(prev => ({ ...prev, taxNumber: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Website
-                  </label>
-                  <input
-                    type="url"
-                    value={profile.website || ''}
-                    onChange={(e) => setProfile(prev => ({ ...prev, website: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Website
+                    </label>
+                    <input
+                      type="url"
+                      value={profile.website || ''}
+                      onChange={(e) => setProfile(prev => ({ ...prev, website: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                      placeholder="https://example.com"
+                    />
+                  </div>
                 </div>
 
                 <div className="flex justify-end">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {loading ? 'Saving...' : 'Save Changes'}
                   </button>
@@ -209,7 +236,7 @@ const HosterSettings = () => {
                     type="password"
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     required
                   />
                 </div>
@@ -223,8 +250,9 @@ const HosterSettings = () => {
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
+                      minLength={6}
                     />
                   </div>
                   <div>
@@ -235,7 +263,7 @@ const HosterSettings = () => {
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       required
                     />
                   </div>
@@ -245,7 +273,7 @@ const HosterSettings = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {loading ? 'Updating...' : 'Update Password'}
                   </button>
@@ -264,9 +292,9 @@ const HosterSettings = () => {
                   </label>
                   <input
                     type="text"
-                    value={profile.companyName}
+                    value={profile.companyName || ''}
                     readOnly
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                   />
                   <p className="text-sm text-gray-500 mt-1">
                     Company name cannot be changed after registration
@@ -280,14 +308,21 @@ const HosterSettings = () => {
                       <EnvelopeIcon className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
                         <p className="font-medium text-gray-900">Email</p>
-                        <p className="text-gray-600">{profile.email}</p>
+                        <p className="text-gray-600">{profile.email || 'Not provided'}</p>
                       </div>
                     </div>
                     <div className="flex items-center">
                       <PhoneIcon className="h-5 w-5 text-gray-400 mr-3" />
                       <div>
                         <p className="font-medium text-gray-900">Phone</p>
-                        <p className="text-gray-600">{profile.phone}</p>
+                        <p className="text-gray-600">{profile.phone || 'Not provided'}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <ChatBubbleLeftRightIcon className="h-5 w-5 text-gray-400 mr-3" />
+                      <div>
+                        <p className="font-medium text-gray-900">WhatsApp</p>
+                        <p className="text-gray-600">{profile.whatsappNumber || 'Not provided'}</p>
                       </div>
                     </div>
                     <div className="flex items-center">

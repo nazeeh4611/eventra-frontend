@@ -14,7 +14,11 @@ import {
   PhoneIcon,
   EnvelopeIcon,
   StarIcon,
-  ExclamationTriangleIcon
+  ExclamationTriangleIcon,
+  XMarkIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ArrowsPointingOutIcon
 } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import axios from 'axios';
@@ -34,16 +38,16 @@ const EventDetail = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [isFavorited, setIsFavorited] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [showLightbox, setShowLightbox] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(0);
+  const [imageDimensions, setImageDimensions] = useState({});
 
-  // Fetch event details with error handling
   const fetchEventDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${baseurl}/events/${id}`);
+      const response = await axios.get(`${baseurl}/allevents/${id}`);
       setEvent(response.data.event);
-      
-      // Check if event is favorited (from localStorage)
       const favorites = JSON.parse(localStorage.getItem('favoriteEvents') || '[]');
       setIsFavorited(favorites.includes(id));
     } catch (error) {
@@ -57,15 +61,11 @@ const EventDetail = () => {
 
   useEffect(() => {
     fetchEventDetails();
-    
-    // Scroll to top on mount
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [fetchEventDetails]);
 
-  // Memoized date calculations
   const dateInfo = useMemo(() => {
     if (!event?.date) return null;
-    
     const date = new Date(event.date);
     return {
       day: date.toLocaleDateString('en-US', { day: '2-digit' }),
@@ -81,26 +81,21 @@ const EventDetail = () => {
     };
   }, [event?.date]);
 
-  // Memoized capacity calculations
   const capacityInfo = useMemo(() => {
     if (!event) return null;
-    
     const availableSeats = event.capacity - event.bookedSeats;
     const occupancyRate = Math.round((event.bookedSeats / event.capacity) * 100);
     const isAlmostFull = occupancyRate >= 80;
     const isSoldOut = availableSeats <= 0;
-    
     return { availableSeats, occupancyRate, isAlmostFull, isSoldOut };
   }, [event]);
 
-  // Share event functionality
   const shareEvent = useCallback(async () => {
     const shareData = {
       title: event.title,
       text: event.shortDescription,
       url: window.location.href,
     };
-
     try {
       if (navigator.share && navigator.canShare?.(shareData)) {
         await navigator.share(shareData);
@@ -117,11 +112,9 @@ const EventDetail = () => {
     }
   }, [event]);
 
-  // Toggle favorite
   const toggleFavorite = useCallback(() => {
     const favorites = JSON.parse(localStorage.getItem('favoriteEvents') || '[]');
     let newFavorites;
-    
     if (isFavorited) {
       newFavorites = favorites.filter(fav => fav !== id);
       toast.success('Removed from favorites');
@@ -129,15 +122,12 @@ const EventDetail = () => {
       newFavorites = [...favorites, id];
       toast.success('Added to favorites');
     }
-    
     localStorage.setItem('favoriteEvents', JSON.stringify(newFavorites));
     setIsFavorited(!isFavorited);
   }, [isFavorited, id]);
 
-  // Handle image navigation with keyboard
   const handleImageNavigation = useCallback((direction) => {
     if (!event?.images?.length) return;
-    
     setActiveImage(prev => {
       if (direction === 'next') {
         return (prev + 1) % event.images.length;
@@ -146,20 +136,53 @@ const EventDetail = () => {
     });
   }, [event?.images?.length]);
 
-  // Keyboard navigation for images
+  const handleLightboxNavigation = useCallback((direction) => {
+    if (!event?.images?.length) return;
+    setLightboxImage(prev => {
+      if (direction === 'next') {
+        return (prev + 1) % event.images.length;
+      }
+      return prev === 0 ? event.images.length - 1 : prev - 1;
+    });
+  }, [event?.images?.length]);
+
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (showReservationModal || showGuestListModal) return;
-      
       if (e.key === 'ArrowLeft') handleImageNavigation('prev');
       if (e.key === 'ArrowRight') handleImageNavigation('next');
+      if (e.key === 'Escape' && showLightbox) setShowLightbox(false);
     };
-
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [handleImageNavigation, showReservationModal, showGuestListModal]);
+  }, [handleImageNavigation, showReservationModal, showGuestListModal, showLightbox]);
 
-  // Handle reservation button click
+  useEffect(() => {
+    if (showLightbox) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showLightbox]);
+
+  const handleImageLoad = (e, index) => {
+    const { naturalWidth, naturalHeight } = e.target;
+    setImageDimensions(prev => ({
+      ...prev,
+      [index]: { width: naturalWidth, height: naturalHeight }
+    }));
+    setImageLoading(false);
+  };
+
+  const getImageContainerClass = (index) => {
+    const dims = imageDimensions[index];
+    if (!dims) return 'object-contain';
+    return dims.width > dims.height ? 'object-cover' : 'object-contain bg-gray-900';
+  };
+
   const handleReservation = useCallback(() => {
     if (capacityInfo?.isSoldOut) {
       toast.error('Sorry, this event is sold out');
@@ -172,7 +195,6 @@ const EventDetail = () => {
     setShowReservationModal(true);
   }, [capacityInfo?.isSoldOut, dateInfo?.isPast]);
 
-  // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="min-h-screen bg-gray-950">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -180,7 +202,6 @@ const EventDetail = () => {
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
         <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-pulse delay-500" />
       </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative">
         <div className="animate-pulse space-y-12">
           <div className="flex items-center justify-between">
@@ -208,21 +229,17 @@ const EventDetail = () => {
     </div>
   );
 
-  // Error state component
   const ErrorState = ({ type }) => {
     const isNotFound = type === 'notFound';
-    
     return (
       <div className="min-h-screen bg-gray-950">
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
         </div>
-
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center">
           <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-12 lg:p-16 overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
-            
             <div className="relative">
               <div className="inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-3xl bg-gradient-to-br from-purple-600 to-pink-600 text-white shadow-lg shadow-purple-500/50 mb-8">
                 {isNotFound ? (
@@ -263,21 +280,17 @@ const EventDetail = () => {
     );
   };
 
-  // Render loading state
   if (loading) return <LoadingSkeleton />;
-
-  // Render error state
   if (error) return <ErrorState type={error} />;
-
-  // Render not found state
   if (!event) return <ErrorState type="notFound" />;
 
-  const images = event.images || [event.featuredImage || event.image || 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg'];
+  const images = event.images && event.images.length > 0 
+    ? event.images 
+    : [event.featuredImage || event.image || 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg'];
 
   return (
     <>
       <div className="min-h-screen bg-gray-950">
-        {/* Background effects */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
@@ -286,7 +299,6 @@ const EventDetail = () => {
 
         <div className="relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-16">
-            {/* Header Section */}
             <div className="mb-8 lg:mb-12">
               <button
                 onClick={() => navigate(-1)}
@@ -299,7 +311,6 @@ const EventDetail = () => {
               
               <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
                 <div className="flex-1">
-                  {/* Tags and Status */}
                   <div className="flex flex-wrap items-center gap-3 mb-6">
                     <span className="px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 text-purple-300">
                       {event.category}
@@ -330,7 +341,6 @@ const EventDetail = () => {
                     )}
                   </div>
 
-                  {/* Title and Description */}
                   <h1 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4 leading-tight">
                     {event.title}
                   </h1>
@@ -339,7 +349,6 @@ const EventDetail = () => {
                   </p>
                 </div>
                 
-                {/* Action Buttons */}
                 <div className="flex items-center gap-3 lg:self-start">
                   <button
                     onClick={shareEvent}
@@ -365,63 +374,69 @@ const EventDetail = () => {
               </div>
             </div>
 
-            {/* Main Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-              {/* Left Column - Images and Details */}
               <div className="lg:col-span-2 space-y-8">
-                {/* Hero Image Gallery */}
                 <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 overflow-hidden group">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
                   
-                  <div className="relative h-80 lg:h-[450px]">
+                  <div className="relative h-80 lg:h-[450px] bg-gray-900 flex items-center justify-center">
                     {imageLoading && (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
                         <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
                       </div>
                     )}
                     <img
                       src={images[activeImage]}
                       alt={`${event.title} - Image ${activeImage + 1}`}
-                      className="w-full h-full object-cover transition-opacity duration-500"
-                      onLoad={() => setImageLoading(false)}
+                      className={`w-full h-full transition-opacity duration-500 ${getImageContainerClass(activeImage)}`}
+                      onLoad={(e) => handleImageLoad(e, activeImage)}
                       onError={(e) => {
                         e.target.src = 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg';
                         setImageLoading(false);
                       }}
                       loading="eager"
                     />
+                    
+                    <button
+                      onClick={() => {
+                        setLightboxImage(activeImage);
+                        setShowLightbox(true);
+                      }}
+                      className="absolute top-4 right-4 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300 z-20"
+                      aria-label="View fullscreen"
+                    >
+                      <ArrowsPointingOutIcon className="h-5 w-5" />
+                    </button>
+                    
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/30 to-transparent" />
                     
-                    {/* Date Badge */}
-                    <div className="absolute top-4 left-4 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 p-3 shadow-lg shadow-purple-500/50">
+                    <div className="absolute top-4 left-4 flex flex-col items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 p-3 shadow-lg shadow-purple-500/50 z-20">
                       <span className="text-xs font-medium text-purple-100">{dateInfo?.weekday}</span>
                       <span className="text-2xl font-bold text-white leading-none">{dateInfo?.day}</span>
                       <span className="text-xs font-medium text-purple-100">{dateInfo?.month}</span>
                     </div>
                     
-                    {/* Navigation Arrows for Desktop */}
                     {images.length > 1 && (
                       <>
                         <button
                           onClick={() => handleImageNavigation('prev')}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300"
+                          className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300 z-20"
                           aria-label="Previous image"
                         >
-                          <ArrowLeftIcon className="h-6 w-6" />
+                          <ChevronLeftIcon className="h-6 w-6" />
                         </button>
                         <button
                           onClick={() => handleImageNavigation('next')}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300"
+                          className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all duration-300 z-20"
                           aria-label="Next image"
                         >
-                          <ArrowLeftIcon className="h-6 w-6 rotate-180" />
+                          <ChevronRightIcon className="h-6 w-6" />
                         </button>
                       </>
                     )}
                     
-                    {/* Image Indicators */}
                     {images.length > 1 && (
-                      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-2xl">
+                      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-2xl z-20">
                         {images.map((_, index) => (
                           <button
                             key={index}
@@ -437,36 +452,39 @@ const EventDetail = () => {
                   </div>
                 </div>
 
-                {/* Thumbnail Gallery */}
                 {images.length > 1 && (
                   <div className="grid grid-cols-4 gap-3">
-                    {images.slice(0, 4).map((img, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setActiveImage(index)}
-                        className={`group relative h-24 lg:h-28 rounded-2xl overflow-hidden border-4 transition-all duration-300 ${
-                          activeImage === index 
-                            ? 'border-purple-400 ring-4 ring-purple-500/20 shadow-2xl scale-105' 
-                            : 'border-transparent hover:border-purple-300 hover:shadow-xl'
-                        }`}
-                        aria-label={`View image ${index + 1}`}
-                      >
-                        <img
-                          src={img}
-                          alt={`${event.title} thumbnail ${index + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        {activeImage === index && (
-                          <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent" />
-                        )}
-                      </button>
-                    ))}
+                    {images.slice(0, 4).map((img, index) => {
+                      const dims = imageDimensions[index];
+                      const isPortrait = dims ? dims.height > dims.width : false;
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setActiveImage(index)}
+                          className={`group relative h-24 lg:h-28 rounded-2xl overflow-hidden border-4 transition-all duration-300 bg-gray-900 ${
+                            activeImage === index 
+                              ? 'border-purple-400 ring-4 ring-purple-500/20 shadow-2xl scale-105' 
+                              : 'border-transparent hover:border-purple-300 hover:shadow-xl'
+                          }`}
+                          aria-label={`View image ${index + 1}`}
+                        >
+                          <img
+                            src={img}
+                            alt={`${event.title} thumbnail ${index + 1}`}
+                            className={`w-full h-full ${isPortrait ? 'object-contain' : 'object-cover'}`}
+                            loading="lazy"
+                            onLoad={(e) => handleImageLoad(e, index)}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-purple-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                          {activeImage === index && (
+                            <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent" />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
-                {/* Event Description */}
                 <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 lg:p-10 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
                   
@@ -484,7 +502,6 @@ const EventDetail = () => {
                   </div>
                 </div>
 
-                {/* Organizer Info */}
                 <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 lg:p-10 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
                   
@@ -495,7 +512,7 @@ const EventDetail = () => {
                     </h2>
                     <div className="space-y-4">
                       <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30">
-                        <h3 className="text-xl font-bold text-white mb-5">{event.organizer}</h3>
+                        <h3 className="text-xl font-bold text-white mb-5">{event.organizer || event.hosterId?.companyName || 'Event Organizer'}</h3>
                         <div className="space-y-3">
                           <a 
                             href={`mailto:${event.contactEmail}`}
@@ -518,7 +535,6 @@ const EventDetail = () => {
                 </div>
               </div>
 
-              {/* Right Column - Booking Card */}
               <div className="lg:sticky lg:top-24 h-fit space-y-6">
                 <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 lg:p-8 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
@@ -529,7 +545,6 @@ const EventDetail = () => {
                     </h3>
 
                     <div className="space-y-4 mb-8">
-                      {/* Date */}
                       <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                         <div className="flex items-start space-x-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
@@ -542,7 +557,6 @@ const EventDetail = () => {
                         </div>
                       </div>
 
-                      {/* Time */}
                       <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                         <div className="flex items-start space-x-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
@@ -555,7 +569,6 @@ const EventDetail = () => {
                         </div>
                       </div>
 
-                      {/* Location */}
                       <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                         <div className="flex items-start space-x-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
@@ -569,7 +582,6 @@ const EventDetail = () => {
                         </div>
                       </div>
 
-                      {/* Capacity */}
                       <div className="group p-4 rounded-2xl bg-gradient-to-br from-purple-900/20 via-indigo-900/20 to-purple-800/20 border border-purple-500/30 hover:border-purple-400/50 transition-all duration-300">
                         <div className="flex items-start space-x-3">
                           <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
@@ -600,7 +612,6 @@ const EventDetail = () => {
                       </div>
                     </div>
 
-                    {/* Price Card */}
                     <div className="relative rounded-3xl bg-gradient-to-br from-purple-600 via-pink-600 to-purple-500 text-white p-8 mb-8 overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-br from-purple-600/80 via-pink-600/80 to-purple-500/80" />
                       
@@ -630,7 +641,6 @@ const EventDetail = () => {
                       </div>
                     </div>
 
-                    {/* Action Buttons */}
                     <div className="space-y-3">
                       <button
                         onClick={handleReservation}
@@ -658,7 +668,6 @@ const EventDetail = () => {
                       </button>
                     </div>
 
-                    {/* Contact Info */}
                     <div className="mt-8 pt-6 border-t border-purple-500/20 text-center">
                       <p className="text-sm text-gray-400 mb-2">
                         Questions? Contact us:
@@ -674,7 +683,6 @@ const EventDetail = () => {
                   </div>
                 </div>
 
-                {/* Tags */}
                 {event.tags && event.tags.length > 0 && (
                   <div className="relative rounded-3xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 p-6 overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
@@ -701,7 +709,6 @@ const EventDetail = () => {
           </div>
         </div>
 
-        {/* Modals */}
         {showReservationModal && (
           <ReservationModal
             event={event}
@@ -716,6 +723,60 @@ const EventDetail = () => {
           />
         )}
       </div>
+
+      {showLightbox && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-95 backdrop-blur-sm">
+          <button
+            onClick={() => setShowLightbox(false)}
+            className="absolute top-4 right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-300 z-50"
+            aria-label="Close lightbox"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+
+          <button
+            onClick={() => handleLightboxNavigation('prev')}
+            className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-300 z-50"
+            aria-label="Previous image"
+          >
+            <ChevronLeftIcon className="h-8 w-8" />
+          </button>
+
+          <button
+            onClick={() => handleLightboxNavigation('next')}
+            className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all duration-300 z-50"
+            aria-label="Next image"
+          >
+            <ChevronRightIcon className="h-8 w-8" />
+          </button>
+
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            <img
+              src={images[lightboxImage]}
+              alt={`${event.title} - Fullscreen ${lightboxImage + 1}`}
+              className="max-w-full max-h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 bg-black/50 backdrop-blur-sm px-4 py-2 rounded-2xl">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setLightboxImage(index)}
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  lightboxImage === index ? 'bg-white scale-125 shadow-lg' : 'bg-white/60 hover:bg-white'
+                }`}
+                aria-label={`View image ${index + 1}`}
+              />
+            ))}
+          </div>
+
+          <div className="absolute top-4 left-4 text-white text-sm bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
+            {lightboxImage + 1} / {images.length}
+          </div>
+        </div>
+      )}
     </>
   );
 };

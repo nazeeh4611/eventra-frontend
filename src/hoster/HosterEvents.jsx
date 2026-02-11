@@ -35,28 +35,18 @@ const HosterEvents = () => {
       const token = localStorage.getItem('hosterToken');
       const params = new URLSearchParams({
         page: currentPage,
-        limit: 10,
-        ...(statusFilter !== 'all' && { status: statusFilter })
-      }).toString();
+        limit: 10
+      });
+      
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
 
       const response = await axios.get(`${baseurl}/hoster/events?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const eventsWithStatus = response.data.events.map(event => {
-        const now = new Date();
-        const eventDate = new Date(event.date);
-        let displayStatus = event.status;
-        
-        if (event.status === 'live') {
-          if (eventDate > now) displayStatus = 'upcoming';
-          else if (eventDate <= now) displayStatus = 'ongoing';
-        }
-        
-        return { ...event, displayStatus };
-      });
-
-      setEvents(eventsWithStatus);
+      setEvents(response.data.events);
       setTotalPages(response.data.totalPages);
     } catch (error) {
       toast.error('Failed to fetch events');
@@ -101,20 +91,6 @@ const HosterEvents = () => {
     }
   };
 
-  const handlePublishEvent = async (eventId) => {
-    try {
-      const token = localStorage.getItem('hosterToken');
-      await axios.put(`${baseurl}/hoster/events/${eventId}/publish`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      toast.success('Event published successfully! It is now live on the platform.');
-      fetchEvents();
-    } catch (error) {
-      toast.error(error.response?.data?.error || 'Failed to publish event');
-    }
-  };
-
   const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.venue.toLowerCase().includes(searchTerm.toLowerCase())
@@ -122,10 +98,9 @@ const HosterEvents = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'live':
-      case 'upcoming': return 'bg-green-100 text-green-800';
-      case 'ongoing': return 'bg-blue-100 text-blue-800';
-      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'live': return 'bg-green-100 text-green-800';
+      case 'upcoming': return 'bg-blue-100 text-blue-800';
+      case 'ongoing': return 'bg-yellow-100 text-yellow-800';
       case 'completed': return 'bg-purple-100 text-purple-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -180,8 +155,9 @@ const HosterEvents = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="all">All Status</option>
-                <option value="draft">Draft</option>
+                <option value="upcoming">Upcoming</option>
                 <option value="live">Live</option>
+                <option value="ongoing">Ongoing</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -245,9 +221,9 @@ const HosterEvents = () => {
                       <div className="text-sm text-gray-500">{event.location}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(event.displayStatus)}`}>
-                        {getStatusIcon(event.displayStatus)}
-                        {event.displayStatus}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                        {getStatusIcon(event.status)}
+                        {event.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -268,35 +244,19 @@ const HosterEvents = () => {
                           <PencilIcon className="h-4 w-4" />
                         </Link>
                         
-                        {event.status === 'draft' && (
-                          <button
-                            onClick={() => handlePublishEvent(event._id)}
-                            className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm flex items-center"
-                            title="Publish Event"
-                          >
-                            <CheckCircleIcon className="h-4 w-4 mr-1" />
-                            Publish
-                          </button>
-                        )}
-
-                        {(event.displayStatus === 'upcoming' || event.displayStatus === 'ongoing') && (
+                        {event.status !== 'cancelled' && event.status !== 'completed' && (
                           <div className="flex items-center space-x-2">
                             <select
-                              value=""
+                              value={event.status}
                               onChange={(e) => handleStatusUpdate(event._id, e.target.value)}
                               className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500"
                               title="Change Status"
                             >
-                              <option value="">Change Status</option>
-                              {event.displayStatus === 'upcoming' && (
-                                <>
-                                  <option value="cancelled">Cancel Event</option>
-                                  <option value="completed">Mark as Completed</option>
-                                </>
-                              )}
-                              {event.displayStatus === 'ongoing' && (
-                                <option value="completed">Mark as Completed</option>
-                              )}
+                              <option value="upcoming">Upcoming</option>
+                              <option value="live">Live</option>
+                              <option value="ongoing">Ongoing</option>
+                              <option value="completed">Completed</option>
+                              <option value="cancelled">Cancelled</option>
                             </select>
                           </div>
                         )}

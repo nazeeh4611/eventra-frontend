@@ -38,6 +38,7 @@ const HosterEventForm = () => {
     contactEmail: '',
     contactPhone: '',
     tags: '',
+    status: 'upcoming',
     existingImages: [],
     featuredImageIndex: 0
   });
@@ -55,6 +56,14 @@ const HosterEventForm = () => {
     'Lifestyle',
     'Health & Wellness',
     'Charity'
+  ];
+
+  const statusOptions = [
+    { value: 'upcoming', label: 'Upcoming' },
+    { value: 'live', label: 'Live' },
+    { value: 'ongoing', label: 'Ongoing' },
+    { value: 'completed', label: 'Completed' },
+    { value: 'cancelled', label: 'Cancelled' }
   ];
 
   useEffect(() => {
@@ -87,6 +96,7 @@ const HosterEventForm = () => {
         contactEmail: event.contactEmail,
         contactPhone: event.contactPhone,
         tags: event.tags.join(', '),
+        status: event.status,
         existingImages: event.images || [],
         featuredImageIndex: featuredIndex >= 0 ? featuredIndex : 0
       });
@@ -182,6 +192,7 @@ const HosterEventForm = () => {
       submitData.append('contactEmail', formData.contactEmail);
       submitData.append('contactPhone', formData.contactPhone);
       submitData.append('tags', formData.tags);
+      submitData.append('status', formData.status);
       submitData.append('featuredImageIndex', formData.featuredImageIndex);
       
       formData.existingImages.forEach(img => {
@@ -207,7 +218,7 @@ const HosterEventForm = () => {
             'Content-Type': 'multipart/form-data'
           }
         });
-        toast.success('Event created successfully! It is now live on the platform.');
+        toast.success('Event created successfully');
       }
 
       navigate('/hoster/events');
@@ -278,6 +289,23 @@ const HosterEventForm = () => {
                 <option value="">Select a category</option>
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Event Status *
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                {statusOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
             </div>
