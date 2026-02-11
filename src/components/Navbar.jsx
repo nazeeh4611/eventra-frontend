@@ -63,15 +63,7 @@ const Navbar = () => {
               </Link>
             ))}
             
-            <Link
-              to="/admin/login"
-              className="relative ml-4 group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/50 hover:shadow-xl hover:shadow-purple-500/60 transition-all duration-300 hover:scale-105"
-            >
-              <span>Admin Portal</span>
-              <svg className="h-4 w-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
+            
           </div>
 
           {/* Mobile Menu Button */}
