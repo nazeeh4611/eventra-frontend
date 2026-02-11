@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   MapPinIcon, 
-  CalendarDaysIcon, 
-  ClockIcon,
-  TicketIcon,
-  StarIcon,
-  UserGroupIcon,
-  EyeIcon
+  CalendarDaysIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 import ReservationModal from './ReservationModal';
 import GuestListModal from './GuestListModal';
 
-const EventCard = ({ event }) => {
+const EventCard = ({ event, isHomePage = false }) => {
   const [showReservationModal, setShowReservationModal] = useState(false);
   const [showGuestListModal, setShowGuestListModal] = useState(false);
   const navigate = useNavigate();
@@ -32,15 +28,104 @@ const EventCard = ({ event }) => {
     navigate(`/events/${event._id}`);
   };
 
+  // HOMEPAGE - Small on mobile/tablet, normal on desktop
+  if (isHomePage) {
+    return (
+      <>
+        <div 
+          onClick={handleCardClick}
+          className="group relative block bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 rounded-lg overflow-hidden cursor-pointer transition-all duration-300"
+        >
+          {/* Event Image - Smaller on mobile, normal on desktop */}
+          <div className="relative h-32 md:h-48 w-full overflow-hidden">
+            <img
+              src={event.featuredImage || event.image}
+              alt={event.title}
+              className="h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-110"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+          </div>
+
+          {/* Content - Small on mobile, normal on desktop */}
+          <div className="p-2.5 md:p-4">
+            {/* Date & Price Row */}
+            <div className="flex justify-between items-center mb-1.5 md:mb-2">
+              <span className="text-[10px] md:text-sm text-gray-400">
+                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+              <span className="text-xs md:text-base font-bold text-white">
+                AED {event.price}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-xs md:text-lg font-bold text-white mb-1.5 md:mb-2 line-clamp-1 md:line-clamp-2">
+              {event.title}
+            </h3>
+
+            {/* Venue */}
+            <div className="flex items-center gap-1 text-gray-400 mb-1.5 md:mb-2">
+              <MapPinIcon className="h-2.5 w-2.5 md:h-4 md:w-4" />
+              <span className="text-[10px] md:text-sm truncate max-w-[140px] md:max-w-[200px]">
+                {event.venue}
+              </span>
+            </div>
+
+            {/* Seats */}
+            <div className="flex items-center gap-1 text-gray-400 mb-2.5 md:mb-4">
+              <UsersIcon className="h-2.5 w-2.5 md:h-4 md:w-4" />
+              <span className="text-[10px] md:text-sm">
+                {availableSeats} seats
+              </span>
+            </div>
+
+            {/* Two Action Buttons */}
+            <div className="grid grid-cols-2 gap-1.5 md:gap-3">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowReservationModal(true);
+                }}
+                className="py-1.5 md:py-2.5 px-1 bg-white/10 backdrop-blur-md border border-white/30 text-white text-[10px] md:text-sm font-medium rounded hover:bg-white/20 transition-all duration-300"
+              >
+                Book
+              </button>
+              <button
+                onClick={handleDetailsClick}
+                className="py-1.5 md:py-2.5 px-1 bg-white/10 backdrop-blur-md border border-white/30 text-white text-[10px] md:text-sm font-medium rounded hover:bg-white/20 transition-all duration-300"
+              >
+                Details
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Modals */}
+        {showReservationModal && (
+          <ReservationModal
+            event={event}
+            onClose={() => setShowReservationModal(false)}
+          />
+        )}
+        {showGuestListModal && (
+          <GuestListModal
+            event={event}
+            onClose={() => setShowGuestListModal(false)}
+          />
+        )}
+      </>
+    );
+  }
+
+  // EVENTS PAGE - Responsive, normal on desktop
   return (
     <>
       <div 
         onClick={handleCardClick}
-        className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20 cursor-pointer"
+        className="group relative block bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 rounded-xl overflow-hidden cursor-pointer transition-all duration-300"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-pink-600/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-pink-600/10 group-hover:to-purple-600/10 transition-all duration-500" />
-        
-        <div className="relative h-48 sm:h-52 md:h-60 overflow-hidden">
+        {/* Event Image - Responsive height */}
+        <div className="relative h-40 md:h-56 w-full overflow-hidden">
           <img
             src={event.featuredImage || event.image}
             alt={event.title}
@@ -48,93 +133,99 @@ const EventCard = ({ event }) => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
           
-          <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs font-semibold">
-                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </div>
-              {event.isFeatured && (
-                <div className="px-2 py-1 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg text-white text-xs font-semibold">
-                  Featured
-                </div>
-              )}
+          {/* Featured Badge */}
+          {event.isFeatured && (
+            <div className="absolute top-2 left-2 md:top-3 md:left-3">
+              <span className="px-2 py-1 md:px-3 md:py-1.5 bg-white/20 backdrop-blur-md border border-white/30 rounded-lg text-white text-[10px] md:text-xs font-semibold">
+                FEATURED
+              </span>
             </div>
-          </div>
-
-          <div className="absolute bottom-2 sm:bottom-3 left-2 sm:left-3 right-2 sm:right-3 flex justify-between items-center">
-            <span className="px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs sm:text-sm font-bold">
-              AED {event.price}
-            </span>
-            <div className="flex items-center gap-1 px-2 py-1 bg-black/50 backdrop-blur-sm rounded-lg text-white text-xs">
-              <UserGroupIcon className="h-3.5 w-3.5" />
-              <span>{availableSeats}</span>
-            </div>
-          </div>
+          )}
         </div>
 
-        <div className="relative p-3 sm:p-4">
-          <div className="flex items-start justify-between mb-2 gap-2">
-            <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300 line-clamp-1 flex-1">
-              {event.title}
-            </h3>
-            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300 whitespace-nowrap flex-shrink-0">
-              {event.category}
+        {/* Content - Responsive padding and text */}
+        <div className="p-3 md:p-5">
+          {/* Date & Price Row */}
+          <div className="flex justify-between items-center mb-2 md:mb-3">
+            <span className="text-xs md:text-base text-gray-400">
+              {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </span>
+            <span className="text-sm md:text-lg font-bold text-white">
+              AED {event.price}
             </span>
           </div>
 
-          <div className="flex items-center justify-between mb-3 text-xs text-gray-400 gap-2">
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <CalendarDaysIcon className="h-3.5 w-3.5" />
-              <span className="truncate">{event.time}</span>
-            </div>
-            <div className="flex items-center gap-1 min-w-0">
-              <MapPinIcon className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="truncate">{event.venue}</span>
-            </div>
+          {/* Title */}
+          <h3 className="text-base md:text-xl font-bold text-white mb-2 md:mb-3 line-clamp-2">
+            {event.title}
+          </h3>
+
+          {/* Category */}
+          <span className="inline-block px-2 py-1 md:px-3 md:py-1.5 rounded-full text-[10px] md:text-xs font-medium bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 mb-2 md:mb-3">
+            {event.category}
+          </span>
+
+          {/* Venue */}
+          <div className="flex items-center gap-1 text-gray-400 mb-1 md:mb-2">
+            <MapPinIcon className="h-3.5 w-3.5 md:h-5 md:w-5" />
+            <span className="text-xs md:text-base truncate">
+              {event.venue}
+            </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          {/* Time */}
+          <div className="flex items-center gap-1 text-gray-400 mb-2 md:mb-3">
+            <CalendarDaysIcon className="h-3.5 w-3.5 md:h-5 md:w-5" />
+            <span className="text-xs md:text-base">
+              {event.time}
+            </span>
+          </div>
+
+          {/* Seats Available */}
+          <div className="flex items-center gap-1 text-gray-400 mb-3 md:mb-4">
+            <UsersIcon className="h-3.5 w-3.5 md:h-5 md:w-5" />
+            <span className="text-xs md:text-base">
+              {availableSeats} seats available
+            </span>
+          </div>
+
+          {/* Three Action Buttons */}
+          <div className="grid grid-cols-3 gap-1.5 md:gap-3">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowReservationModal(true);
               }}
-              className="py-1.5 sm:py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-300 flex items-center justify-center gap-1"
+              className="py-2 md:py-3 px-1 bg-white/10 backdrop-blur-md border border-white/30 text-white text-[10px] md:text-sm font-medium rounded-lg hover:bg-white/20 transition-all duration-300"
             >
-              <TicketIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Book</span>
-              <span className="sm:hidden">Book</span>
+              Book
             </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowGuestListModal(true);
               }}
-              className="py-1.5 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300 flex items-center justify-center gap-1"
+              className="py-2 md:py-3 px-1 bg-white/10 backdrop-blur-md border border-white/30 text-white text-[10px] md:text-sm font-medium rounded-lg hover:bg-white/20 transition-all duration-300"
             >
-              <UserGroupIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Guest List</span>
-              <span className="sm:hidden">Guests</span>
+              Guest
             </button>
             <button
               onClick={handleDetailsClick}
-              className="py-1.5 sm:py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs sm:text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-green-500/50 transition-all duration-300 flex items-center justify-center gap-1"
+              className="py-2 md:py-3 px-1 bg-white/10 backdrop-blur-md border border-white/30 text-white text-[10px] md:text-sm font-medium rounded-lg hover:bg-white/20 transition-all duration-300"
             >
-              <EyeIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Details</span>
-              <span className="sm:hidden">View</span>
+              Details
             </button>
           </div>
         </div>
       </div>
 
+      {/* Modals */}
       {showReservationModal && (
         <ReservationModal
           event={event}
           onClose={() => setShowReservationModal(false)}
         />
       )}
-
       {showGuestListModal && (
         <GuestListModal
           event={event}

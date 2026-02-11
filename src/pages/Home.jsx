@@ -148,6 +148,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Hero Carousel */}
       <div
         className="relative h-[85vh] xs:h-[80vh] sm:h-[75vh] md:h-[80vh] lg:h-[85vh] overflow-hidden"
         onTouchStart={handleTouchStart}
@@ -217,6 +218,7 @@ const Home = () => {
         </div>
       </div>
 
+      {/* Spotlight Carousel Section */}
       <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img 
@@ -251,62 +253,59 @@ const Home = () => {
         </div>
       </section>
 
-      <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <img 
-            src="https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg" 
-            alt=""
-            className="w-full h-full object-cover"
-          />
+{/* Upcoming Events Section - Mobile First */}
+{/* Upcoming Events Section - Clean card layout like events page */}
+<section className="py-6 px-3 bg-[#0a0a0a] relative overflow-hidden">
+  <div className="max-w-7xl mx-auto relative z-10">
+    {/* Header */}
+    <div className="flex items-center justify-between mb-4">
+      <div>
+        <div className="flex items-center gap-1 mb-0.5">
+          <CalendarIcon className="w-3.5 h-3.5 text-pink-400" />
+          <span className="text-pink-400 font-semibold text-[10px] uppercase tracking-wider">
+            Coming Soon
+          </span>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-row justify-between items-center mb-5 xs:mb-6 sm:mb-8">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400" />
-                <span className="text-pink-400 font-semibold text-xs uppercase tracking-wider">
-                  Coming Soon
-                </span>
-              </div>
-              <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                Upcoming Events
-              </h2>
+        <h2 className="text-lg font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+          Upcoming Events
+        </h2>
+      </div>
+      <Link
+        to="/events"
+        className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-0.5 text-xs"
+      >
+        View all
+        <ArrowRightIcon className="w-3 h-3" />
+      </Link>
+    </div>
+    
+    {loading ? (
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2, 3, 4].map((n) => (
+          <div key={n} className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-lg animate-pulse">
+            <div className="h-32 bg-purple-800/20 rounded-t-lg" />
+            <div className="p-3 space-y-2">
+              <div className="h-3 bg-purple-700/30 rounded w-3/4" />
+              <div className="h-2 bg-purple-700/30 rounded w-1/2" />
             </div>
-            <Link
-              to="/events"
-              className="text-pink-400 hover:text-pink-300 font-semibold flex items-center gap-1 group text-xs sm:text-sm transition-colors touch-manipulation"
-            >
-              Browse all
-              <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
           </div>
-          {loading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-5">
-              {[1, 2, 3, 4].map((n) => (
-                <div key={n} className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-sm rounded-xl overflow-hidden animate-pulse border border-purple-500/20">
-                  <div className="h-28 xs:h-32 sm:h-36 md:h-40 bg-purple-800/20" />
-                  <div className="p-3 xs:p-4 space-y-2">
-                    <div className="h-3 bg-purple-700/30 rounded w-3/4" />
-                    <div className="h-2 bg-purple-700/30 rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : upcomingEvents.length === 0 ? (
-            <div className="text-center py-8 sm:py-10 text-gray-400 bg-gradient-to-br from-purple-900/10 to-pink-900/10 backdrop-blur-sm rounded-xl border border-purple-500/20 text-sm sm:text-base">
-              No upcoming events available.
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 xs:gap-4 sm:gap-5">
-              {upcomingEvents.slice(0, 4).map((event) => (
-                <EventCard key={event._id} event={event} />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        ))}
+      </div>
+    ) : upcomingEvents.length === 0 ? (
+      <div className="text-center py-6 text-gray-400 bg-gradient-to-br from-purple-900/10 to-pink-900/10 rounded-lg text-xs">
+        No upcoming events available.
+      </div>
+    ) : (
+      <div className="grid grid-cols-2 gap-3">
+        {upcomingEvents.slice(0, 4).map((event) => (
+          <EventCard key={event._id} event={event} isHomePage={true} />
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
+      {/* Experience Gallery */}
       <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img 
@@ -369,6 +368,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Features Section */}
       <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a] relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img 
@@ -411,6 +411,7 @@ const Home = () => {
         </div>
       </section>
 
+      {/* CTA Section */}
       <section className="py-10 xs:py-12 sm:py-14 md:py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <img 
