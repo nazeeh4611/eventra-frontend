@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { 
-  PlusIcon,
-  PencilIcon,
-  TrashIcon,
+  CalendarDaysIcon, 
+  BuildingOfficeIcon,
   EyeIcon,
-  CalendarDaysIcon,
-  CurrencyDollarIcon,
-  UsersIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ArrowPathIcon
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -21,13 +17,21 @@ const AdminEvents = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [hosterFilter, setHosterFilter] = useState('all');
+  const [hosters, setHosters] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [selectedEvents, setSelectedEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [showReservationsModal, setShowReservationsModal] = useState(false);
+  const [showGuestsModal, setShowGuestsModal] = useState(false);
+  const [reservations, setReservations] = useState([]);
+  const [guests, setGuests] = useState([]);
 
   useEffect(() => {
     fetchEvents();
-  }, [currentPage, statusFilter]);
+    fetchHosters();
+  }, [currentPage, statusFilter, hosterFilter]);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -36,10 +40,11 @@ const AdminEvents = () => {
       const params = new URLSearchParams({
         page: currentPage,
         limit: 10,
-        ...(statusFilter !== 'all' && { status: statusFilter })
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(hosterFilter !== 'all' && { hosterId: hosterFilter })
       }).toString();
 
-      const response = await axios.get(`${baseurl}/events?${params}`, {
+      const response = await axios.get(`${baseurl}/admin/events?${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -53,159 +58,130 @@ const AdminEvents = () => {
     }
   };
 
-  const handleDeleteEvent = async (eventId) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
-
+  const fetchHosters = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`${baseurl}/events/${eventId}`, {
+      const response = await axios.get(`${baseurl}/admin/hosters?limit=100`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      toast.success('Event deleted successfully');
-      fetchEvents();
+      setHosters(response.data.hosters);
     } catch (error) {
-      toast.error('Failed to delete event');
+      console.error('Error fetching hosters:', error);
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedEvents.length} events?`)) return;
-
+  const handleStatusUpdate = async (eventId, status) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const deletePromises = selectedEvents.map(eventId =>
-        axios.delete(`${baseurl}/events/${eventId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+      await axios.put(`${baseurl}/admin/events/${eventId}/status`, 
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      await Promise.all(deletePromises);
-      toast.success(`${selectedEvents.length} events deleted successfully`);
-      setSelectedEvents([]);
+      toast.success(`Event ${status}`);
       fetchEvents();
     } catch (error) {
-      toast.error('Failed to delete events');
+      toast.error('Failed to update event status');
     }
   };
 
-  const handleSelectEvent = (eventId) => {
-    setSelectedEvents(prev =>
-      prev.includes(eventId)
-        ? prev.filter(id => id !== eventId)
-        : [...prev, eventId]
-    );
+  const viewEventDetails = async (event) => {
+    setSelectedEvent(event);
+    setShowEventModal(true);
   };
 
-  const handleSelectAll = () => {
-    if (selectedEvents.length === events.length) {
-      setSelectedEvents([]);
-    } else {
-      setSelectedEvents(events.map(event => event._id));
+  const viewReservations = async (eventId) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${baseurl}/admin/events/${eventId}/reservations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSelectedEvent({ _id: eventId });
+      setReservations(response.data.reservations);
+      setShowReservationsModal(true);
+    } catch (error) {
+      toast.error('Failed to fetch reservations');
+    }
+  };
+
+  const viewGuests = async (eventId) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.get(`${baseurl}/admin/events/${eventId}/guests`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSelectedEvent({ _id: eventId });
+      setGuests(response.data.guests);
+      setShowGuestsModal(true);
+    } catch (error) {
+      toast.error('Failed to fetch guests');
     }
   };
 
   const filteredEvents = events.filter(event =>
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.venue.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.category.toLowerCase().includes(searchTerm.toLowerCase())
+    event.hosterId?.companyName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  return (
-    <div>
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Events Management</h1>
-            <p className="text-gray-600">Manage all events on the platform</p>
-          </div>
-          <div className="flex items-center space-x-4 mt-4 md:mt-0">
-            <Link
-              to="/admin/events/new"
-              className="btn-primary flex items-center"
-            >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              New Event
-            </Link>
-            <button
-              onClick={fetchEvents}
-              className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50"
-              title="Refresh"
-            >
-              <ArrowPathIcon className="h-5 w-5 text-gray-600" />
-            </button>
-          </div>
-        </div>
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'live': return 'bg-blue-100 text-blue-800';
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
 
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search events by title, venue, or category..."
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-                />
-              </div>
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Events Management</h1>
+        <p className="text-gray-600">View and manage all events</p>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+        <div className="grid md:grid-cols-4 gap-4">
+          <div className="md:col-span-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search events..."
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-            <div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-dubai-blue focus:border-transparent"
-              >
-                <option value="all">All Status</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="ongoing">Ongoing</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div>
-              <button className="w-full px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center">
-                <FunnelIcon className="h-5 w-5 mr-2 text-gray-600" />
-                More Filters
-              </button>
-            </div>
+          </div>
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Status</option>
+              <option value="draft">Draft</option>
+              <option value="live">Live</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div>
+            <select
+              value={hosterFilter}
+              onChange={(e) => setHosterFilter(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Hosters</option>
+              {hosters.map(hoster => (
+                <option key={hoster._id} value={hoster._id}>{hoster.companyName}</option>
+              ))}
+            </select>
           </div>
         </div>
       </div>
-
-      {selectedEvents.length > 0 && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="bg-blue-100 p-2 rounded-lg mr-4">
-              <CalendarDaysIcon className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-blue-900">
-                {selectedEvents.length} events selected
-              </p>
-              <p className="text-sm text-blue-700">
-                Actions will apply to all selected events
-              </p>
-            </div>
-          </div>
-          <div className="flex space-x-3">
-            <button
-              onClick={handleBulkDelete}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center"
-            >
-              <TrashIcon className="h-4 w-4 mr-2" />
-              Delete Selected
-            </button>
-            <button
-              onClick={() => setSelectedEvents([])}
-              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              Clear Selection
-            </button>
-          </div>
-        </div>
-      )}
 
       {loading ? (
         <div className="space-y-4">
@@ -222,120 +198,73 @@ const AdminEvents = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left">
-                    <input
-                      type="checkbox"
-                      checked={selectedEvents.length === events.length && events.length > 0}
-                      onChange={handleSelectAll}
-                      className="h-4 w-4 text-dubai-blue rounded"
-                    />
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Event
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Date & Time
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Venue
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Event</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hoster</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredEvents.map((event) => (
                   <tr key={event._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <input
-                        type="checkbox"
-                        checked={selectedEvents.includes(event._id)}
-                        onChange={() => handleSelectEvent(event._id)}
-                        className="h-4 w-4 text-dubai-blue rounded"
-                      />
-                    </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden mr-4">
-                          <img
-                            src={event.featuredImage}
-                            alt={event.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
+                        <img
+                          src={event.featuredImage}
+                          alt={event.title}
+                          className="h-12 w-12 rounded-lg object-cover mr-4"
+                        />
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {event.title}
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <CurrencyDollarIcon className="h-4 w-4 text-gray-400 mr-1" />
-                            <span className="text-sm text-gray-500">
-                              AED {event.price}
-                            </span>
-                            <span className="mx-2">•</span>
-                            <UsersIcon className="h-4 w-4 text-gray-400 mr-1" />
-                            <span className="text-sm text-gray-500">
-                              {event.bookedSeats}/{event.capacity}
-                            </span>
-                          </div>
+                          <div className="text-sm font-medium text-gray-900">{event.title}</div>
+                          <div className="text-sm text-gray-500">AED {event.price}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{event.hosterId?.companyName}</div>
+                      <div className="text-sm text-gray-500">{event.hosterId?.contactPerson}</div>
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
                         {new Date(event.date).toLocaleDateString()}
                       </div>
-                      <div className="text-sm text-gray-500">
-                        {event.time}
-                      </div>
+                      <div className="text-sm text-gray-500">{event.time}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{event.venue}</div>
-                      <div className="text-sm text-gray-500">{event.location}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                        event.status === 'upcoming' ? 'bg-green-100 text-green-800' :
-                        event.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
-                        event.status === 'completed' ? 'bg-gray-100 text-gray-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(event.status)}`}>
+                        {event.status}
                       </span>
-                      {event.isFeatured && (
-                        <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-dubai-gold to-yellow-600 text-white">
-                          Featured
-                        </span>
-                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
-                        <Link
-                          to={`/events/${event._id}`}
-                          target="_blank"
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                          title="View"
+                        <button
+                          onClick={() => viewEventDetails(event)}
+                          className="p-2 text-gray-400 hover:text-blue-600"
+                          title="View Details"
                         >
                           <EyeIcon className="h-4 w-4" />
-                        </Link>
-                        <Link
-                          to={`/admin/events/edit/${event._id}`}
-                          className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg"
-                          title="Edit"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Link>
-                        <button
-                          onClick={() => handleDeleteEvent(event._id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                          title="Delete"
-                        >
-                          <TrashIcon className="h-4 w-4" />
                         </button>
+                        <button
+                          onClick={() => viewReservations(event._id)}
+                          className="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                        >
+                          Reservations
+                        </button>
+                        <button
+                          onClick={() => viewGuests(event._id)}
+                          className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
+                        >
+                          Guests
+                        </button>
+                        {event.status !== 'cancelled' && event.status !== 'completed' && (
+                          <button
+                            onClick={() => handleStatusUpdate(event._id, 'cancelled')}
+                            className="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                          >
+                            Cancel
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -347,48 +276,20 @@ const AdminEvents = () => {
           <div className="bg-white px-6 py-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(currentPage * 10, filteredEvents.length)}</span> of{' '}
-                <span className="font-medium">{filteredEvents.length}</span> results
+                Page {currentPage} of {totalPages}
               </div>
               <div className="flex space-x-2">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
                 >
                   Previous
                 </button>
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-2 rounded-lg text-sm ${
-                        currentPage === pageNum
-                          ? 'bg-dubai-blue text-white'
-                          : 'border border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm disabled:opacity-50"
                 >
                   Next
                 </button>
@@ -402,16 +303,236 @@ const AdminEvents = () => {
             <CalendarDaysIcon className="h-10 w-10 text-gray-400" />
           </div>
           <h3 className="text-2xl font-bold text-gray-900 mb-2">No events found</h3>
-          <p className="text-gray-600 mb-6">
-            {searchTerm ? 'Try adjusting your search terms' : 'Get started by creating your first event'}
+          <p className="text-gray-600">
+            {searchTerm ? 'Try adjusting your search terms' : 'No events available'}
           </p>
-          <Link
-            to="/admin/events/new"
-            className="btn-primary inline-flex items-center"
-          >
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Create New Event
-          </Link>
+        </div>
+      )}
+
+      {showEventModal && selectedEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Event Details</h3>
+                <button
+                  onClick={() => setShowEventModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <img
+                      src={selectedEvent.featuredImage}
+                      alt={selectedEvent.title}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-lg">{selectedEvent.title}</h4>
+                    <p className="text-gray-600">{selectedEvent.shortDescription}</p>
+                    <div className="mt-4">
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedEvent.status)}`}>
+                        {selectedEvent.status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-2">Event Information</h5>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm text-gray-500">Date</p>
+                        <p className="font-medium">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Time</p>
+                        <p className="font-medium">{selectedEvent.time}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Venue</p>
+                        <p className="font-medium">{selectedEvent.venue}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Price</p>
+                        <p className="font-medium">AED {selectedEvent.price}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h5 className="font-medium text-gray-900 mb-2">Hoster Information</h5>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm text-gray-500">Company</p>
+                        <p className="font-medium">{selectedEvent.hosterId?.companyName}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Contact</p>
+                        <p className="font-medium">{selectedEvent.hosterId?.contactPerson}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email</p>
+                        <p className="font-medium">{selectedEvent.contactEmail}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Phone</p>
+                        <p className="font-medium">{selectedEvent.contactPhone}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h5 className="font-medium text-gray-900 mb-2">Description</h5>
+                  <p className="text-gray-700">{selectedEvent.description}</p>
+                </div>
+
+                <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <button
+                    onClick={() => setShowEventModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReservationsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Event Reservations</h3>
+                <button
+                  onClick={() => setShowReservationsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {reservations.length > 0 ? (
+                  reservations.map((reservation) => (
+                    <div key={reservation._id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="grid md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Customer</p>
+                          <p className="font-medium">{reservation.fullName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="font-medium">{reservation.email}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Tickets</p>
+                          <p className="font-medium">{reservation.numberOfTickets}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Status</p>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                            reservation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {reservation.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">No reservations found</p>
+                )}
+              </div>
+
+              <div className="flex justify-end pt-6 border-t mt-6">
+                <button
+                  onClick={() => setShowReservationsModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showGuestsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-900">Event Guests</h3>
+                <button
+                  onClick={() => setShowGuestsModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {guests.length > 0 ? (
+                  guests.map((guest) => (
+                    <div key={guest._id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="grid md:grid-cols-4 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Guest Name</p>
+                          <p className="font-medium">{guest.guestName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Email</p>
+                          <p className="font-medium">{guest.email}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">RSVP Status</p>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            guest.rsvpStatus === 'confirmed' ? 'bg-green-100 text-green-800' :
+                            guest.rsvpStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {guest.rsvpStatus}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Check-in</p>
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            guest.checkedIn ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {guest.checkedIn ? 'Checked In' : 'Not Checked In'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 text-center py-8">No guests found</p>
+                )}
+              </div>
+
+              <div className="flex justify-end pt-6 border-t mt-6">
+                <button
+                  onClick={() => setShowGuestsModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

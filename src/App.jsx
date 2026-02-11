@@ -2,8 +2,9 @@ import React from 'react';
 import { Routes } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-import UserRoutes from './Routes/UserRoutes'
-import AdminRoutes from "./Routes/AdminRoutes"
+import UserRoutes from './routes/UserRoutes';
+import AdminRoutes from './routes/AdminRoutes';
+import HosterRoutes from './routes/HosterRoutes';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         {UserRoutes}
         {AdminRoutes}
+        {HosterRoutes}
       </Routes>
     </div>
   );
