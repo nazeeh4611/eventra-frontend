@@ -66,7 +66,7 @@ const Contact = () => {
     },
     {
       title: 'Call Us',
-      description: '+971 4 123 4567',
+      description: '+971 58 179 4457',
       details: 'Mon-Fri 9AM-6PM',
       icon: PhoneIcon,
       color: 'text-purple-400'
@@ -90,23 +90,23 @@ const Contact = () => {
   const departments = [
     {
       name: 'Event Partnerships',
-      email: 'partnerships@eventradubai.ae',
-      phone: '+971 4 123 4567 Ext. 101'
+      email: 'support@eventra.club',
+      phone: '+971 58 179 4457'
     },
     {
       name: 'Customer Support',
-      email: 'support@eventradubai.ae',
-      phone: '+971 4 123 4567 Ext. 102'
+      email: 'support@eventra.club',
+      phone: '+971 58 179 4457'
     },
     {
       name: 'Media & PR',
-      email: 'media@eventradubai.ae',
-      phone: '+971 4 123 4567 Ext. 103'
+      email: 'support@eventra.club',
+      phone: '+971 58 179 4457'
     },
     {
       name: 'Technical Support',
-      email: 'tech@eventradubai.ae',
-      phone: '+971 4 123 4567 Ext. 104'
+      email: 'support@eventra.club',
+      phone: '+971 58 179 4457'
     }
   ];
 
@@ -202,7 +202,7 @@ const Contact = () => {
                           value={formData.phone}
                           onChange={handleChange}
                           className="w-full px-5 py-4 rounded-2xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                          placeholder="+971 50 123 4567"
+                          placeholder="++971 58 179 4457"
                         />
                       </div>
                       <div>
@@ -317,7 +317,7 @@ const Contact = () => {
                       Immediate help for ongoing events
                     </p>
                     <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 mb-2">
-                      +971 50 123 4567
+                    +971 58 179 4457
                     </div>
                     <p className="text-base text-gray-400 font-medium">
                       24/7 emergency hotline
