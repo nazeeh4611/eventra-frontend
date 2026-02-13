@@ -13,7 +13,6 @@ import {
 
 const About = () => {
   const teamMembers = [
-    
     {
       name: 'Mohamed Jafar',
       role: 'CEO & Founder',
@@ -22,19 +21,19 @@ const About = () => {
     },
     {
       name: 'DC',
-      ole: 'Operations Director',
+      role: 'Operations Director',
       description: 'Expert in luxury event planning and venue management across the UAE',
       image: '/dc.png'
     },
     {
       name: 'Mariya Rose',
-      role: 'Technical Director',
+      role: 'Marketing Director',
       description: 'Digital transformation and technology innovation specialist for the events industry',
       image: '/mariya.png'
     },
     {
-      name: 'Jabir Ahmad',
-      role: 'Marketing Director',
+      name: 'Jabir Ahmd',
+      role: 'Technical Director',
       description: 'Brand strategy and digital marketing expert with a creative approach',
       image: '/jabir.png'
     }
@@ -131,7 +130,7 @@ const About = () => {
                     <img
                       src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
                       alt="Eventra Office"
-                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
@@ -139,7 +138,7 @@ const About = () => {
                     <img
                       src="https://images.unsplash.com/photo-1549451371-64aa98a6f660?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
                       alt="Team Meeting"
-                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
@@ -150,7 +149,7 @@ const About = () => {
                     <img
                       src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
                       alt="Event Setup"
-                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
@@ -158,7 +157,7 @@ const About = () => {
                     <img
                       src="https://images.unsplash.com/photo-1492684223066-e9e4aab4d25e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
                       alt="Successful Event"
-                      className="w-full h-56 object-cover group-hover:scale-110 transition-transform duration-500"
+                      className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-purple-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
@@ -205,55 +204,60 @@ const About = () => {
           </div>
         </section>
 
-        {/* Team Section */}
-        <section className="py-20 px-6">
-          <div className="container mx-auto max-w-7xl">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4">
-                Meet Our Leadership Team
-              </h2>
-              <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-                The passionate individuals driving Eventra's success story
-              </p>
+{/* Team Section */}
+<section className="py-20 px-6">
+  <div className="container mx-auto max-w-7xl">
+    <div className="text-center mb-16">
+      <h2 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-200 to-white mb-4">
+        Meet Our Leadership Team
+      </h2>
+      <p className="text-xl text-gray-400 max-w-3xl mx-auto">
+        The passionate individuals driving Eventra's success story
+      </p>
+    </div>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {teamMembers.map((member, index) => (
+        <div
+          key={index}
+          className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-pink-600/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-pink-600/10 group-hover:to-purple-600/10 transition-all duration-500" />
+          
+          {/* Fixed image container with object-cover and object-top to show faces */}
+          <div className="relative h-64 overflow-hidden">
+            <img
+              src={member.image}
+              alt={member.name}
+              className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = 'https://via.placeholder.com/400x400?text=' + member.name;
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
+          </div>
+          
+          <div className="relative p-5 space-y-2">
+            <h3 className="text-lg font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300">
+              {member.name}
+            </h3>
+            
+            <div className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 px-2.5 py-0.5">
+              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-purple-300">
+                {member.role}
+              </span>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {teamMembers.map((member, index) => (
-                <div
-                  key={index}
-                  className="group relative block overflow-hidden rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 hover:border-purple-400/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-600/0 via-pink-600/0 to-purple-600/0 group-hover:from-purple-600/10 group-hover:via-pink-600/10 group-hover:to-purple-600/10 transition-all duration-500" />
-                  
-                  <div className="relative h-64 overflow-hidden">
-                    <img
-                      src={member.image}
-                      alt={member.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
-                  </div>
-                  
-                  <div className="relative p-6 space-y-3">
-                    <h3 className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-300 group-hover:to-pink-300 transition-all duration-300">
-                      {member.name}
-                    </h3>
-                    
-                    <div className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 px-3 py-1">
-                      <span className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-purple-300">
-                        {member.role}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm text-gray-300">
-                      {member.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-gray-300">
+              {member.description}
+            </p>
           </div>
-        </section>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
 
         {/* Milestones Section */}
         <section className="py-20 px-6">
