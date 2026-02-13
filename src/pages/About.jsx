@@ -13,29 +13,30 @@ import {
 
 const About = () => {
   const teamMembers = [
+    
     {
-      name: 'Ahmed Al Mansoori',
+      name: 'Mohamed Jafar',
       role: 'CEO & Founder',
-      description: '15+ years in event management across the GCC region',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+      description: 'Visionary leader with extensive experience in event management across the GCC region',
+      image: '/jafer.png'
     },
     {
-      name: 'Sarah Al Hashimi',
-      role: 'Operations Director',
-      description: 'Expert in luxury event planning and venue management',
-      image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+      name: 'DC',
+      ole: 'Operations Director',
+      description: 'Expert in luxury event planning and venue management across the UAE',
+      image: '/dc.png'
     },
     {
-      name: 'Omar Al Farsi',
-      role: 'Technology Director',
-      description: 'Digital transformation specialist for the events industry',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+      name: 'Mariya Rose',
+      role: 'Technical Director',
+      description: 'Digital transformation and technology innovation specialist for the events industry',
+      image: '/mariya.png'
     },
     {
-      name: 'Fatima Al Qasimi',
+      name: 'Jabir Ahmad',
       role: 'Marketing Director',
-      description: 'Brand strategy and digital marketing expert',
-      image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+      description: 'Brand strategy and digital marketing expert with a creative approach',
+      image: '/jabir.png'
     }
   ];
 
@@ -216,7 +217,7 @@ const About = () => {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {teamMembers.map((member, index) => (
                 <div
                   key={index}

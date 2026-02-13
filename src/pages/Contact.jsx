@@ -73,7 +73,7 @@ const Contact = () => {
     },
     {
       title: 'Email Us',
-      description: 'info@eventradubai.ae',
+      description: 'support@eventra.club',
       details: 'support@eventradubai.ae',
       icon: EnvelopeIcon,
       color: 'text-blue-400'
