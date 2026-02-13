@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeftIcon,
@@ -8,7 +8,8 @@ import {
   CurrencyDollarIcon,
   UserGroupIcon,
   CloudArrowUpIcon,
-  XMarkIcon
+  XMarkIcon,
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -18,11 +19,31 @@ const HosterEventForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!id;
+  const fileInputRef = useRef(null);
+  const canvasRef = useRef(null);
+  const imageRef = useRef(null);
 
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
+  const [showCropper, setShowCropper] = useState(false);
+  const [currentCropImage, setCurrentCropImage] = useState(null);
+  const [cropIndex, setCropIndex] = useState(null);
+
+  // cropData is in *image natural coordinates*
+  const [cropData, setCropData] = useState({
+    x: 0,
+    y: 0,
+    width: 400,
+    height: 500,
+    naturalWidth: 0,
+    naturalHeight: 0
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -40,22 +61,15 @@ const HosterEventForm = () => {
     tags: '',
     status: 'upcoming',
     existingImages: [],
-    featuredImageIndex: 0
+    featuredImageIndex: 0,
+    musicGenres: '',
+    musicArtists: ''
   });
 
   const categories = [
-    'Business',
-    'Technology',
-    'Music',
-    'Sports',
-    'Arts & Culture',
-    'Food & Drink',
-    'Networking',
-    'Entertainment',
-    'Education',
-    'Lifestyle',
-    'Health & Wellness',
-    'Charity'
+    'Business', 'Technology', 'Music', 'Sports', 'Arts & Culture',
+    'Food & Drink', 'Networking', 'Entertainment', 'Education',
+    'Lifestyle', 'Health & Wellness', 'Charity'
   ];
 
   const statusOptions = [
@@ -95,10 +109,12 @@ const HosterEventForm = () => {
         capacity: event.capacity,
         contactEmail: event.contactEmail,
         contactPhone: event.contactPhone,
-        tags: event.tags.join(', '),
+        tags: event.tags?.join(', ') || '',
         status: event.status,
         existingImages: event.images || [],
-        featuredImageIndex: featuredIndex >= 0 ? featuredIndex : 0
+        featuredImageIndex: featuredIndex >= 0 ? featuredIndex : 0,
+        musicGenres: event.musicGenres?.join(', ') || 'BOLLYWOOD, SOUTH, TECHNO',
+        musicArtists: event.musicArtists?.join(', ') || 'ALASANDRA, VIPIN, TORTA'
       });
 
       setPreviewImages(event.images || []);
@@ -137,6 +153,248 @@ const HosterEventForm = () => {
     const newPreviews = [...previewImages];
     newPreviews.splice(index, 1);
     setPreviewImages(newPreviews);
+  };
+
+  const handleCropImage = (index) => {
+    setCurrentCropImage(previewImages[index]);
+    setCropIndex(index);
+    setShowCropper(true);
+    
+    const img = new Image();
+    img.src = previewImages[index];
+    img.onload = () => {
+      const aspectRatio = 4 / 5;
+      let width, height;
+      
+      if (img.width / img.height > aspectRatio) {
+        height = img.height;
+        width = height * aspectRatio;
+      } else {
+        width = img.width;
+        height = width / aspectRatio;
+      }
+      
+      setCropData({
+        x: (img.width - width) / 2,
+        y: (img.height - height) / 2,
+        width,
+        height,
+        naturalWidth: img.width,
+        naturalHeight: img.height
+      });
+
+      // initial canvas preview
+      requestAnimationFrame(() => {
+        updateCanvas({
+          x: (img.width - width) / 2,
+          y: (img.height - height) / 2,
+          width,
+          height,
+          naturalWidth: img.width,
+          naturalHeight: img.height
+        });
+      });
+    };
+  };
+
+  // Map client coords to image *natural* coords
+  const clientToImageCoords = (clientX, clientY) => {
+    if (!imageRef.current) return { x: 0, y: 0 };
+
+    const rect = imageRef.current.getBoundingClientRect();
+    const { naturalWidth, naturalHeight } = cropData;
+
+    const scaleX = naturalWidth / rect.width;
+    const scaleY = naturalHeight / rect.height;
+
+    let x = (clientX - rect.left) * scaleX;
+    let y = (clientY - rect.top) * scaleY;
+
+    // clamp
+    x = Math.max(0, Math.min(x, naturalWidth));
+    y = Math.max(0, Math.min(y, naturalHeight));
+
+    return { x, y };
+  };
+
+  const handleMouseDown = (e, type = 'move') => {
+    e.preventDefault();
+    if (!imageRef.current) return;
+
+    const { x, y } = clientToImageCoords(e.clientX, e.clientY);
+
+    if (type === 'move') {
+      setIsDragging(true);
+      setDragStart({
+        x: x - cropData.x,
+        y: y - cropData.y
+      });
+    } else {
+      setIsResizing(true);
+      setResizeDirection(type);
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (!imageRef.current) return;
+
+    const { x: imgX, y: imgY } = clientToImageCoords(e.clientX, e.clientY);
+
+    if (isDragging) {
+      const newX = imgX - dragStart.x;
+      const newY = imgY - dragStart.y;
+
+      setCropData(prev => {
+        const updated = {
+          ...prev,
+          x: Math.max(0, Math.min(newX, prev.naturalWidth - prev.width)),
+          y: Math.max(0, Math.min(newY, prev.naturalHeight - prev.height))
+        };
+        updateCanvas(updated);
+        return updated;
+      });
+    } else if (isResizing) {
+      setCropData(prev => {
+        let { x, y, width, height } = prev;
+        const aspectRatio = 4 / 5;
+
+        if (resizeDirection.includes('right')) {
+          const newWidth = imgX - x;
+          if (newWidth > 50 && x + newWidth <= prev.naturalWidth) {
+            width = newWidth;
+            height = width / aspectRatio;
+            if (y + height > prev.naturalHeight) {
+              height = prev.naturalHeight - y;
+              width = height * aspectRatio;
+            }
+          }
+        }
+        if (resizeDirection.includes('bottom')) {
+          const newHeight = imgY - y;
+          if (newHeight > 50 && y + newHeight <= prev.naturalHeight) {
+            height = newHeight;
+            width = height * aspectRatio;
+            if (x + width > prev.naturalWidth) {
+              width = prev.naturalWidth - x;
+              height = width / aspectRatio;
+            }
+          }
+        }
+        if (resizeDirection.includes('left')) {
+          const newWidth = width + (x - imgX);
+          if (newWidth > 50 && imgX >= 0) {
+            width = newWidth;
+            x = imgX;
+            height = width / aspectRatio;
+            if (y + height > prev.naturalHeight) {
+              height = prev.naturalHeight - y;
+              width = height * aspectRatio;
+              x = prev.x + prev.width - width;
+            }
+          }
+        }
+        if (resizeDirection.includes('top')) {
+          const newHeight = height + (y - imgY);
+          if (newHeight > 50 && imgY >= 0) {
+            height = newHeight;
+            y = imgY;
+            width = height * aspectRatio;
+            if (x + width > prev.naturalWidth) {
+              width = prev.naturalWidth - x;
+              height = width / aspectRatio;
+              y = prev.y + prev.height - height;
+            }
+          }
+        }
+
+        // clamp final box
+        x = Math.max(0, Math.min(x, prev.naturalWidth - width));
+        y = Math.max(0, Math.min(y, prev.naturalHeight - height));
+
+        const updated = {
+          ...prev,
+          x,
+          y,
+          width,
+          height
+        };
+        updateCanvas(updated);
+        return updated;
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    setIsResizing(false);
+    setResizeDirection(null);
+  };
+
+  const updateCanvas = (data = cropData) => {
+    if (!canvasRef.current || !imageRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = 800;
+    canvas.height = 1000;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      imageRef.current,
+      data.x,
+      data.y,
+      data.width,
+      data.height,
+      0,
+      0,
+      800,
+      1000
+    );
+  };
+
+  const handleCropComplete = () => {
+    if (!imageRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const data = cropData;
+
+    // Make sure canvas has the latest crop area
+    updateCanvas(data);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        toast.error('Failed to crop image');
+        return;
+      }
+
+      const croppedFile = new File([blob], `cropped-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      const croppedImageUrl = URL.createObjectURL(blob);
+      
+      const isExistingImage = cropIndex < formData.existingImages.length;
+      
+      if (isExistingImage) {
+        const newExistingImages = [...formData.existingImages];
+        newExistingImages[cropIndex] = croppedImageUrl;
+        setFormData(prev => ({
+          ...prev,
+          existingImages: newExistingImages
+        }));
+      } else {
+        const fileIndex = cropIndex - formData.existingImages.length;
+        const newSelectedFiles = [...selectedFiles];
+        newSelectedFiles[fileIndex] = croppedFile;
+        setSelectedFiles(newSelectedFiles);
+      }
+
+      const newPreviews = [...previewImages];
+      newPreviews[cropIndex] = croppedImageUrl;
+      setPreviewImages(newPreviews);
+      
+      setShowCropper(false);
+      setCurrentCropImage(null);
+      setCropIndex(null);
+      toast.success('Image cropped successfully');
+    }, 'image/jpeg', 0.9);
   };
 
   const handleSetFeatured = (index) => {
@@ -194,9 +452,15 @@ const HosterEventForm = () => {
       submitData.append('tags', formData.tags);
       submitData.append('status', formData.status);
       submitData.append('featuredImageIndex', formData.featuredImageIndex);
+      submitData.append('musicGenres', formData.musicGenres);
+      submitData.append('musicArtists', formData.musicArtists);
       
       formData.existingImages.forEach(img => {
-        submitData.append('existingImages', img);
+        if (img.startsWith('blob:')) {
+          submitData.append('croppedImages', img);
+        } else {
+          submitData.append('existingImages', img);
+        }
       });
       
       selectedFiles.forEach(file => {
@@ -239,10 +503,127 @@ const HosterEventForm = () => {
 
   return (
     <div>
+      {showCropper && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          <div className="bg-white rounded-2xl w-full max-w-6xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Crop Image for Card</h3>
+                <p className="text-sm text-gray-500">Maintain 4:5 aspect ratio for perfect card display</p>
+              </div>
+              <button
+                onClick={() => setShowCropper(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <XMarkIcon className="h-6 w-6 text-gray-500" />
+              </button>
+            </div>
+            
+            <div className="flex gap-6">
+              <div className="relative flex-1 bg-gray-900 rounded-lg overflow-hidden" style={{ height: '600px' }}>
+                <img
+                  ref={imageRef}
+                  src={currentCropImage}
+                  alt="Crop"
+                  className="absolute inset-0 w-full h-full object-contain"
+                  crossOrigin="anonymous"
+                  onLoad={() => updateCanvas(cropData)}
+                />
+                
+                <div
+                  className="absolute border-2 border-purple-500 cursor-move"
+                  style={{
+                    left: `${(cropData.x / cropData.naturalWidth) * 100}%`,
+                    top: `${(cropData.y / cropData.naturalHeight) * 100}%`,
+                    width: `${(cropData.width / cropData.naturalWidth) * 100}%`,
+                    height: `${(cropData.height / cropData.naturalHeight) * 100}%`,
+                    boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.7)'
+                  }}
+                  onMouseDown={(e) => handleMouseDown(e, 'move')}
+                >
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-white" />
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-white" />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-white" />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-white" />
+                  
+                  <div
+                    className="absolute -right-2 -top-2 w-4 h-4 bg-purple-600 rounded-full cursor-ne-resize"
+                    onMouseDown={(e) => handleMouseDown(e, 'top-right')}
+                  />
+                  <div
+                    className="absolute -left-2 -top-2 w-4 h-4 bg-purple-600 rounded-full cursor-nw-resize"
+                    onMouseDown={(e) => handleMouseDown(e, 'top-left')}
+                  />
+                  <div
+                    className="absolute -right-2 -bottom-2 w-4 h-4 bg-purple-600 rounded-full cursor-se-resize"
+                    onMouseDown={(e) => handleMouseDown(e, 'bottom-right')}
+                  />
+                  <div
+                    className="absolute -left-2 -bottom-2 w-4 h-4 bg-purple-600 rounded-full cursor-sw-resize"
+                    onMouseDown={(e) => handleMouseDown(e, 'bottom-left')}
+                  />
+                </div>
+              </div>
+
+              <div className="w-80">
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-2">Preview</h4>
+                  <div className="aspect-[4/5] bg-gray-900 rounded-lg overflow-hidden">
+                    <canvas
+                      ref={canvasRef}
+                      width="800"
+                      height="1000"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Card preview (4:5 ratio)
+                  </p>
+                </div>
+
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-900 mb-2">Tips</h4>
+                  <ul className="text-xs text-purple-700 space-y-1">
+                    <li>• Drag to move crop area</li>
+                    <li>• Drag corners to resize</li>
+                    <li>• Keep face/important elements centered</li>
+                    <li>• 4:5 ratio works best for cards</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowCropper(false)}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCropComplete}
+                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v16h16M4 4l16 16M4 20L20 4" />
+                </svg>
+                Apply Crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* form UI below is same as your original, just using handleChange etc. */}
       <div className="mb-8">
         <button
           onClick={() => navigate('/hoster/events')}
-          className="inline-flex items-center text-green-600 hover:text-green-700 mb-6"
+          className="inline-flex items-center text-purple-600 hover:text-purple-700 mb-6"
         >
           <ArrowLeftIcon className="h-5 w-5 mr-2" />
           Back to Events
@@ -256,6 +637,7 @@ const HosterEventForm = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Basic Information */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Basic Information</h2>
           
@@ -270,7 +652,7 @@ const HosterEventForm = () => {
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Enter event title"
               />
             </div>
@@ -284,7 +666,7 @@ const HosterEventForm = () => {
                 value={formData.category}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="">Select a category</option>
                 {categories.map(category => (
@@ -302,7 +684,7 @@ const HosterEventForm = () => {
                 value={formData.status}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 {statusOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -320,7 +702,7 @@ const HosterEventForm = () => {
                 value={formData.shortDescription}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Brief description for cards and listings"
                 maxLength="150"
               />
@@ -339,9 +721,43 @@ const HosterEventForm = () => {
                 onChange={handleChange}
                 required
                 rows="6"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Detailed description of the event..."
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Music Genres
+              </label>
+              <input
+                type="text"
+                name="musicGenres"
+                value={formData.musicGenres}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="BOLLYWOOD, SOUTH, TECHNO"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Separate genres with commas
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Music Artists
+              </label>
+              <input
+                type="text"
+                name="musicArtists"
+                value={formData.musicArtists}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="ALASANDRA, VIPIN, TORTA"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Separate artists with commas
+              </p>
             </div>
 
             <div>
@@ -353,7 +769,7 @@ const HosterEventForm = () => {
                 name="tags"
                 value={formData.tags}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="e.g., conference, networking, luxury"
               />
               <p className="mt-1 text-sm text-gray-500">
@@ -363,6 +779,7 @@ const HosterEventForm = () => {
           </div>
         </div>
 
+        {/* Date & Time */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Date & Time</h2>
           
@@ -379,7 +796,7 @@ const HosterEventForm = () => {
                 onChange={handleChange}
                 required
                 min={new Date().toISOString().split('T')[0]}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
@@ -393,12 +810,13 @@ const HosterEventForm = () => {
                 value={formData.time}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
         </div>
 
+        {/* Location */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Location</h2>
           
@@ -414,7 +832,7 @@ const HosterEventForm = () => {
                 value={formData.venue}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="e.g., Dubai World Trade Centre"
               />
             </div>
@@ -429,13 +847,14 @@ const HosterEventForm = () => {
                 value={formData.location}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="e.g., Dubai, UAE"
               />
             </div>
           </div>
         </div>
 
+        {/* Pricing & Capacity */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Pricing & Capacity</h2>
           
@@ -453,7 +872,7 @@ const HosterEventForm = () => {
                 required
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="0.00"
               />
             </div>
@@ -470,13 +889,14 @@ const HosterEventForm = () => {
                 onChange={handleChange}
                 required
                 min="1"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="Maximum attendees"
               />
             </div>
           </div>
         </div>
 
+        {/* Contact */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Contact Information</h2>
           
@@ -491,7 +911,7 @@ const HosterEventForm = () => {
                 value={formData.contactEmail}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="contact@example.com"
               />
             </div>
@@ -506,13 +926,14 @@ const HosterEventForm = () => {
                 value={formData.contactPhone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="+971 50 123 4567"
               />
             </div>
           </div>
         </div>
 
+        {/* Images */}
         <div className="bg-white rounded-xl shadow-lg p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-6">Event Images</h2>
           
@@ -521,11 +942,12 @@ const HosterEventForm = () => {
               <CloudArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
               <div className="mt-4">
                 <label className="cursor-pointer">
-                  <span className="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                  <span className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700">
                     <PhotoIcon className="h-5 w-5 mr-2" />
                     Upload Images
                   </span>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     multiple
                     accept="image/*"
@@ -551,18 +973,28 @@ const HosterEventForm = () => {
                     Uploaded Images ({previewImages.length})
                   </h3>
                   <div className="text-sm text-gray-500">
-                    Click star to set as featured
+                    Click crop icon to adjust image for card display (4:5 ratio)
                   </div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {previewImages.map((image, index) => (
-                    <div key={index} className="relative group">
+                    <div key={index} className="relative group aspect-[4/5]">
                       <img
                         src={image}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-full object-cover rounded-lg"
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
+                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex flex-col items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleCropImage(index)}
+                          className="p-2 bg-white text-purple-600 rounded-full hover:bg-purple-100"
+                          title="Crop image for card"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v16h16M4 4l16 16M4 20L20 4" />
+                          </svg>
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleSetFeatured(index)}
@@ -573,7 +1005,7 @@ const HosterEventForm = () => {
                           }`}
                           title={formData.featuredImageIndex === index ? 'Featured' : 'Set as featured'}
                         >
-                          ★
+                          <CheckIcon className="h-4 w-4" />
                         </button>
                         <button
                           type="button"
@@ -597,6 +1029,7 @@ const HosterEventForm = () => {
           </div>
         </div>
 
+        {/* Submit */}
         <div className="flex justify-end space-x-4">
           <button
             type="button"
@@ -608,7 +1041,7 @@ const HosterEventForm = () => {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center"
+            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center"
           >
             {loading ? (
               <>

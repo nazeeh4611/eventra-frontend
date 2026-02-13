@@ -71,6 +71,7 @@ const Home = () => {
   const [activeHero, setActiveHero] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+  const [imageDimensions, setImageDimensions] = useState({});
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -84,6 +85,10 @@ const Home = () => {
   const handleTouchEnd = () => {
     if (touchStart - touchEnd > 75) setActiveHero((prev) => (prev + 1) % heroSlides.length);
     if (touchStart - touchEnd < -75) setActiveHero((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+  };
+
+  const handleImageLoad = (id, dimensions) => {
+    setImageDimensions(prev => ({ ...prev, [id]: dimensions }));
   };
 
   const experienceImages = [
@@ -115,101 +120,94 @@ const Home = () => {
 
   const features = [
     {
-      icon: <TicketIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+      icon: <TicketIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />,
       title: "Curated Selection",
       description: "Only quality events with great venues, good organization and the right crowd, hand-picked for Dubai."
     },
     {
-      icon: <MapPinIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+      icon: <MapPinIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />,
       title: "Prime Locations",
       description: "Clear venue details, maps and timings for Dubai's best rooftops, clubs, hotels and beach spots."
     },
     {
-      icon: <UsersIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+      icon: <UsersIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />,
       title: "People & Networking",
       description: "Meet new people, clients and friends at events built for connection, fun and memorable nights out."
     },
     {
-      icon: <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+      icon: <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />,
       title: "Easy Booking",
       description: "Secure your spot in seconds with our seamless booking system and instant confirmation."
     },
     {
-      icon: <StarIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+      icon: <StarIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />,
       title: "VIP Access",
       description: "Exclusive access to premium events, early bird tickets, and special member-only experiences."
     },
     {
-      icon: <ClockIcon className="w-5 h-5 sm:w-6 sm:h-6" />,
+      icon: <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />,
       title: "24/7 Support",
       description: "Our dedicated team is always ready to help you plan the perfect event experience."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Hero Carousel */}
+    <div className="min-h-screen bg-[#0a0a0a] overflow-x-hidden">
+      {/* Hero Carousel - Fully Responsive */}
       <div
-        className="relative h-[85vh] xs:h-[80vh] sm:h-[75vh] md:h-[80vh] lg:h-[85vh] overflow-hidden"
+        className="relative h-[60vh] xs:h-[65vh] sm:h-[70vh] md:h-[75vh] lg:h-[85vh] overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {heroSlides.map((slide, index) => {
-          const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
-          return (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                activeHero === index ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              <div className="absolute inset-0 bg-gradient-to-b from-purple-900/70 via-black/70 to-[#0a0a0a] z-10" />
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-                <img
-                  src={slide.image}
-                  alt={slide.title}
-                  className={`w-full h-full ${
-                    imageDimensions.width && imageDimensions.height
-                      ? imageDimensions.width > imageDimensions.height
-                        ? 'object-cover'
-                        : 'object-contain'
-                      : 'object-cover'
-                  }`}
-                  onLoad={(e) => {
-                    const { naturalWidth, naturalHeight } = e.target;
-                    setImageDimensions({ width: naturalWidth, height: naturalHeight });
-                  }}
-                />
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center z-20 px-4">
-                <div className="text-center w-full max-w-4xl">
-                  <h1 className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-2 sm:mb-4 md:mb-6 tracking-tight drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] leading-tight">
-                    {slide.title}
-                  </h1>
-                  <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 mb-4 sm:mb-6 md:mb-8 max-w-2xl mx-auto px-4">
-                    {slide.subtitle}
-                  </p>
-                  <Link
-                    to={slide.buttonLink}
-                    className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 xs:px-7 sm:px-8 py-3 sm:py-3.5 rounded-full font-semibold transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 text-sm sm:text-base touch-manipulation active:scale-95"
-                  >
-                    {slide.buttonText}
-                    <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </Link>
-                </div>
+        {heroSlides.map((slide, index) => (
+          <div
+            key={slide.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              activeHero === index ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <div className="absolute inset-0 bg-gradient-to-b from-purple-900/70 via-black/70 to-[#0a0a0a] z-10" />
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+              <img
+                src={slide.image}
+                alt={slide.title}
+                className="w-full h-full object-cover"
+                onLoad={(e) => handleImageLoad(slide.id, {
+                  width: e.target.naturalWidth,
+                  height: e.target.naturalHeight
+                })}
+              />
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center z-20 px-4 sm:px-6 md:px-8">
+              <div className="text-center w-full max-w-3xl lg:max-w-4xl">
+                <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-2 sm:mb-3 md:mb-4 lg:mb-6 tracking-tight drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-tight">
+                  {slide.title}
+                </h1>
+                <p className="text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 mb-4 sm:mb-5 md:mb-6 lg:mb-8 max-w-xl lg:max-w-2xl mx-auto px-2">
+                  {slide.subtitle}
+                </p>
+                <Link
+                  to={slide.buttonLink}
+                  className="inline-flex items-center justify-center gap-1.5 sm:gap-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-5 sm:px-6 md:px-7 lg:px-8 py-2.5 sm:py-3 md:py-3.5 lg:py-4 rounded-full font-semibold transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 text-xs sm:text-sm md:text-base lg:text-lg touch-manipulation active:scale-95"
+                >
+                  {slide.buttonText}
+                  <ArrowRightIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                </Link>
               </div>
             </div>
-          );
-        })}
-        <div className="absolute bottom-4 xs:bottom-6 sm:bottom-8 left-0 right-0 z-30 flex justify-center gap-2 px-4">
+          </div>
+        ))}
+        
+        {/* Hero Navigation Dots - Responsive */}
+        <div className="absolute bottom-4 xs:bottom-5 sm:bottom-6 md:bottom-8 left-0 right-0 z-30 flex justify-center gap-1.5 sm:gap-2 px-4">
           {heroSlides.map((_, index) => (
             <button
               key={index}
               onClick={() => setActiveHero(index)}
               className={`h-1.5 xs:h-2 rounded-full transition-all duration-300 touch-manipulation ${
                 activeHero === index
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 w-8 xs:w-10 sm:w-12'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 w-6 xs:w-8 sm:w-10 md:w-12'
                   : 'bg-white/30 w-1.5 xs:w-2 hover:bg-white/50'
               }`}
               aria-label={`Go to slide ${index + 1}`}
@@ -218,8 +216,8 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Spotlight Carousel Section */}
-      <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Spotlight Carousel Section - Responsive */}
+      <section className="py-6 xs:py-8 sm:py-10 md:py-12 lg:py-16 px-3 sm:px-4 md:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img 
             src="https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg" 
@@ -229,84 +227,83 @@ const Home = () => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-purple-950/20 to-[#111111]" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="flex flex-row justify-between items-center mb-5 xs:mb-6 sm:mb-8">
+          <div className="flex flex-row justify-between items-center mb-4 xs:mb-5 sm:mb-6 md:mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <FireIcon className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
-                <span className="text-cyan-400 font-semibold text-xs uppercase tracking-wider">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1">
+                <FireIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-cyan-400" />
+                <span className="text-cyan-400 font-semibold text-[0.65rem] sm:text-xs md:text-sm uppercase tracking-wider">
                   Featured Events
                 </span>
               </div>
-              <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+              <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
                 Spotlight Experiences
               </h2>
             </div>
             <Link
               to="/events"
-              className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 group text-xs sm:text-sm transition-colors touch-manipulation"
+              className="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 group text-xs sm:text-sm md:text-base transition-colors touch-manipulation"
             >
               View all
-              <ArrowRightIcon className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRightIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
           <EventCarousel />
         </div>
       </section>
 
-{/* Upcoming Events Section - Mobile First */}
-{/* Upcoming Events Section - Clean card layout like events page */}
-<section className="py-6 px-3 bg-[#0a0a0a] relative overflow-hidden">
-  <div className="max-w-7xl mx-auto relative z-10">
-    {/* Header */}
-    <div className="flex items-center justify-between mb-4">
-      <div>
-        <div className="flex items-center gap-1 mb-0.5">
-          <CalendarIcon className="w-3.5 h-3.5 text-pink-400" />
-          <span className="text-pink-400 font-semibold text-[10px] uppercase tracking-wider">
-            Coming Soon
-          </span>
-        </div>
-        <h2 className="text-lg font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-          Upcoming Events
-        </h2>
-      </div>
-      <Link
-        to="/events"
-        className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-0.5 text-xs"
-      >
-        View all
-        <ArrowRightIcon className="w-3 h-3" />
-      </Link>
-    </div>
-    
-    {loading ? (
-      <div className="grid grid-cols-2 gap-3">
-        {[1, 2, 3, 4].map((n) => (
-          <div key={n} className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-lg animate-pulse">
-            <div className="h-32 bg-purple-800/20 rounded-t-lg" />
-            <div className="p-3 space-y-2">
-              <div className="h-3 bg-purple-700/30 rounded w-3/4" />
-              <div className="h-2 bg-purple-700/30 rounded w-1/2" />
+      {/* Upcoming Events Section - Fully Responsive Grid */}
+      <section className="py-4 xs:py-6 sm:py-8 md:py-10 lg:py-12 px-3 sm:px-4 md:px-6 lg:px-8 bg-[#0a0a0a] relative overflow-hidden">
+        <div className="max-w-7xl mx-auto relative z-10">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3 xs:mb-4 sm:mb-5 md:mb-6">
+            <div>
+              <div className="flex items-center gap-1 sm:gap-1.5 mb-0.5">
+                <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-pink-400" />
+                <span className="text-pink-400 font-semibold text-[0.6rem] sm:text-xs md:text-sm uppercase tracking-wider">
+                  Coming Soon
+                </span>
+              </div>
+              <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                Upcoming Events
+              </h2>
             </div>
+            <Link
+              to="/events"
+              className="text-pink-400 hover:text-pink-300 font-medium flex items-center gap-0.5 text-xs sm:text-sm md:text-base"
+            >
+              View all
+              <ArrowRightIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
+            </Link>
           </div>
-        ))}
-      </div>
-    ) : upcomingEvents.length === 0 ? (
-      <div className="text-center py-6 text-gray-400 bg-gradient-to-br from-purple-900/10 to-pink-900/10 rounded-lg text-xs">
-        No upcoming events available.
-      </div>
-    ) : (
-      <div className="grid grid-cols-2 gap-3">
-        {upcomingEvents.slice(0, 4).map((event) => (
-          <EventCard key={event._id} event={event} isHomePage={true} />
-        ))}
-      </div>
-    )}
-  </div>
-</section>
+          
+          {loading ? (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 rounded-lg sm:rounded-xl md:rounded-2xl animate-pulse">
+                  <div className="h-24 xs:h-28 sm:h-32 md:h-36 lg:h-40 bg-purple-800/20 rounded-t-lg" />
+                  <div className="p-2 xs:p-2.5 sm:p-3 md:p-4 space-y-1.5 sm:space-y-2">
+                    <div className="h-2.5 sm:h-3 bg-purple-700/30 rounded w-3/4" />
+                    <div className="h-2 sm:h-2.5 bg-purple-700/30 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : upcomingEvents.length === 0 ? (
+            <div className="text-center py-6 sm:py-8 md:py-10 text-gray-400 bg-gradient-to-br from-purple-900/10 to-pink-900/10 rounded-lg sm:rounded-xl md:rounded-2xl text-xs sm:text-sm md:text-base">
+              No upcoming events available.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 xs:gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+              {upcomingEvents.slice(0, 4).map((event) => (
+                <EventCard key={event._id} event={event} isHomePage={true} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
-      {/* Experience Gallery */}
-      <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Experience Gallery - Responsive Grid */}
+      <section className="py-6 xs:py-8 sm:py-10 md:py-12 lg:py-16 px-3 sm:px-4 md:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img 
             src="https://images.pexels.com/photos/1449794/pexels-photo-1449794.jpeg" 
@@ -316,14 +313,14 @@ const Home = () => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-cyan-950/10 to-[#111111]" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-6 xs:mb-8 sm:mb-10">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <StarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" />
-              <span className="text-purple-400 font-semibold text-xs uppercase tracking-wider">
+          <div className="text-center mb-4 xs:mb-5 sm:mb-6 md:mb-8 lg:mb-10">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <StarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-purple-400" />
+              <span className="text-purple-400 font-semibold text-[0.65rem] sm:text-xs md:text-sm uppercase tracking-wider">
                 Experience Gallery
               </span>
             </div>
-            <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Immerse in the Experience
             </h2>
           </div>
@@ -333,7 +330,7 @@ const Home = () => {
               return (
                 <div
                   key={index}
-                  className="group relative overflow-hidden rounded-lg aspect-[3/4] cursor-pointer border border-purple-500/20 hover:border-cyan-400/50 transition-all duration-300 touch-manipulation active:scale-95"
+                  className="group relative overflow-hidden rounded-lg sm:rounded-xl md:rounded-2xl aspect-[3/4] cursor-pointer border border-purple-500/20 hover:border-cyan-400/50 transition-all duration-300 touch-manipulation active:scale-95"
                 >
                   <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
                     <img
@@ -353,11 +350,11 @@ const Home = () => {
                     />
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-purple-900 via-purple-900/60 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
-                  <div className="absolute bottom-0 left-0 right-0 p-2 xs:p-3 sm:p-4 transform translate-y-1 group-hover:translate-y-0 transition-transform">
+                  <div className="absolute bottom-0 left-0 right-0 p-2 xs:p-2.5 sm:p-3 md:p-4 transform translate-y-1 group-hover:translate-y-0 transition-transform">
                     <h3 className="text-white font-bold text-xs xs:text-sm sm:text-base md:text-lg mb-0.5 drop-shadow-lg">
                       {image.title}
                     </h3>
-                    <p className="text-cyan-200 text-[10px] xs:text-xs sm:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 line-clamp-1">
+                    <p className="text-cyan-200 text-[0.6rem] xs:text-[0.65rem] sm:text-xs md:text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 line-clamp-1">
                       {image.description}
                     </p>
                   </div>
@@ -368,8 +365,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-8 xs:py-10 sm:py-12 md:py-16 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a] relative overflow-hidden">
+      {/* Features Section - Responsive Grid */}
+      <section className="py-6 xs:py-8 sm:py-10 md:py-12 lg:py-16 px-3 sm:px-4 md:px-6 lg:px-8 bg-[#0a0a0a] relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
           <img 
             src="https://images.pexels.com/photos/1699156/pexels-photo-1699156.jpeg" 
@@ -379,14 +376,14 @@ const Home = () => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-6 xs:mb-8 sm:mb-10 md:mb-12">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <TicketIcon className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
-              <span className="text-cyan-400 font-semibold text-xs uppercase tracking-wider">
+          <div className="text-center mb-5 xs:mb-6 sm:mb-8 md:mb-10 lg:mb-12">
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+              <TicketIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-cyan-400" />
+              <span className="text-cyan-400 font-semibold text-[0.65rem] sm:text-xs md:text-sm uppercase tracking-wider">
                 Why Choose Us
               </span>
             </div>
-            <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-2 px-4">
+            <h2 className="text-lg xs:text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent mb-1 sm:mb-2 px-2">
               A vibrant platform with curated events, clear details and easy booking
             </h2>
           </div>
@@ -394,12 +391,12 @@ const Home = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-sm border border-purple-500/20 p-4 xs:p-5 sm:p-6 rounded-xl hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 group touch-manipulation"
+                className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-sm border border-purple-500/20 p-3 xs:p-4 sm:p-5 md:p-6 rounded-lg sm:rounded-xl md:rounded-2xl hover:border-cyan-400/50 transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 group touch-manipulation"
               >
-                <div className="w-9 h-9 xs:w-10 xs:h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg flex items-center justify-center mb-3 sm:mb-4 text-cyan-400 group-hover:from-purple-600/30 group-hover:to-pink-600/30 transition-colors border border-purple-500/30">
+                <div className="w-8 h-8 xs:w-9 xs:h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-purple-600/20 to-pink-600/20 rounded-lg flex items-center justify-center mb-2 sm:mb-3 md:mb-4 text-cyan-400 group-hover:from-purple-600/30 group-hover:to-pink-600/30 transition-colors border border-purple-500/30">
                   {feature.icon}
                 </div>
-                <h3 className="text-base xs:text-lg sm:text-xl font-bold text-white mb-1 sm:mb-2">
+                <h3 className="text-sm xs:text-base sm:text-lg md:text-xl font-bold text-white mb-1 sm:mb-1.5 md:mb-2">
                   {feature.title}
                 </h3>
                 <p className="text-gray-300 text-xs xs:text-sm sm:text-base leading-relaxed">
@@ -411,8 +408,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-10 xs:py-12 sm:py-14 md:py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* CTA Section - Fully Responsive */}
+      <section className="py-8 xs:py-10 sm:py-12 md:py-14 lg:py-16 px-3 sm:px-4 md:px-6 lg:px-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           <img 
             src="https://images.pexels.com/photos/1763067/pexels-photo-1763067.jpeg" 
@@ -422,22 +419,22 @@ const Home = () => {
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-purple-950/30 to-[#0a0a0a]" />
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 xs:mb-4 sm:mb-5 drop-shadow-[0_0_30px_rgba(168,85,247,0.5)] leading-tight px-4">
+          <h2 className="text-xl xs:text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2 xs:mb-3 sm:mb-4 md:mb-5 drop-shadow-[0_0_20px_rgba(168,85,247,0.5)] leading-tight px-2">
             Get Started Today
           </h2>
-          <p className="text-sm xs:text-base sm:text-lg md:text-xl text-gray-300 mb-5 xs:mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
+          <p className="text-sm xs:text-base sm:text-lg md:text-xl text-gray-300 mb-4 xs:mb-5 sm:mb-6 md:mb-7 lg:mb-8 max-w-2xl mx-auto px-3">
             Join thousands of event-goers discovering the best experiences Dubai has to offer
           </p>
-          <div className="flex flex-col xs:flex-row gap-3 justify-center items-stretch xs:items-center px-4">
+          <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center items-stretch xs:items-center px-3">
             <Link
               to="/events"
-              className="w-full xs:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 xs:px-7 sm:px-8 py-3 sm:py-3.5 rounded-full font-semibold transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 text-center text-sm sm:text-base touch-manipulation active:scale-95"
+              className="w-full xs:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-5 xs:px-6 sm:px-7 md:px-8 py-2.5 xs:py-3 sm:py-3.5 md:py-4 rounded-full font-semibold transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 text-center text-xs sm:text-sm md:text-base lg:text-lg touch-manipulation active:scale-95"
             >
               Browse Events
             </Link>
             <Link
               to="/about"
-              className="w-full xs:w-auto border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 px-6 xs:px-7 sm:px-8 py-3 sm:py-3.5 rounded-full font-semibold transition-all duration-300 text-center hover:shadow-lg hover:shadow-cyan-400/30 text-sm sm:text-base touch-manipulation active:scale-95"
+              className="w-full xs:w-auto border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 px-5 xs:px-6 sm:px-7 md:px-8 py-2.5 xs:py-3 sm:py-3.5 md:py-4 rounded-full font-semibold transition-all duration-300 text-center hover:shadow-lg hover:shadow-cyan-400/30 text-xs sm:text-sm md:text-base lg:text-lg touch-manipulation active:scale-95"
             >
               Learn More
             </Link>

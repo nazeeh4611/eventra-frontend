@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { XMarkIcon, TicketIcon } from '@heroicons/react/24/outline';
+// components/ReservationModal.jsx
+import React, { useState, useEffect } from 'react';
+import { XMarkIcon, TicketIcon, UserIcon, PhoneIcon, CalendarIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import baseurl from '../Base/base';
@@ -10,8 +11,19 @@ const ReservationModal = ({ event, onClose }) => {
     phone: '',
     numberOfTickets: 1
   });
-
   const [loading, setLoading] = useState(false);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    
+    return () => {
+      document.body.style.overflow = originalStyle;
+      document.body.style.touchAction = '';
+    };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,128 +36,19 @@ const ReservationModal = ({ event, onClose }) => {
         hosterId: event.hosterId?._id || event.hosterId
       };
 
-      // Create reservation in database
-      const response = await axios.post(`${baseurl}/reservations`, reservationData);
+      await axios.post(`${baseurl}/reservations`, reservationData);
       
-      // Get hoster WhatsApp number - check multiple possible locations
-      const hosterWhatsapp = 
-        event.contactWhatsapp || 
-        event.hosterId?.whatsappNumber || 
-        event.hosterWhatsapp ||
-        '';
-
-      // Get the reservation from response
-      const reservation = response.data.reservation || response.data;
-
-      // Format date and time properly
-      const eventDate = event.date ? new Date(event.date).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }) : 'N/A';
-
-      // Send WhatsApp message to hoster if number exists
+      // Send WhatsApp notification to hoster
+      const hosterWhatsapp = event.contactWhatsapp || event.hosterId?.whatsappNumber || event.hosterWhatsapp;
       if (hosterWhatsapp) {
-        // Clean the WhatsApp number (remove spaces, +, etc)
-        let cleanWhatsapp = hosterWhatsapp.replace(/[\s+]/g, '');
-        if (!cleanWhatsapp.startsWith('+')) {
-          cleanWhatsapp = '+' + cleanWhatsapp;
-        }
-
-        // Comprehensive WhatsApp message with all details
-        const whatsappMessage = `🎟️ *NEW RESERVATION RECEIVED* 🎟️%0A%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `*EVENT DETAILS*%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `📌 *Title:* ${event.title || 'N/A'}%0A` +
-          `📅 *Date:* ${eventDate}%0A` +
-          `⏰ *Time:* ${event.time || 'N/A'}%0A` +
-          `📍 *Location:* ${event.location || 'N/A'}%0A` +
-          `💰 *Price per Ticket:* AED ${event.price || 0}%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-          `*CUSTOMER DETAILS*%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `👤 *Name:* ${formData.fullName}%0A` +
-          `📞 *Phone:* ${formData.phone}%0A` +
-          `🎫 *Tickets:* ${formData.numberOfTickets}%0A` +
-          `💵 *Total Amount:* AED ${event.price * formData.numberOfTickets}%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-          `*RESERVATION INFO*%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `🆔 *Reservation ID:* ${reservation?._id || 'N/A'}%0A` +
-          `📊 *Status:* ${reservation?.status || 'Pending Confirmation'}%0A` +
-          `⏱️ *Booked on:* ${reservation?.createdAt ? new Date(reservation.createdAt).toLocaleString() : new Date().toLocaleString()}%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-          `*ADDITIONAL INFORMATION*%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `📝 *Event Description:* ${event.description?.substring(0, 100) || 'N/A'}${event.description?.length > 100 ? '...' : ''}%0A` +
-          `👥 *Hosted by:* ${event.hosterId?.name || event.hosterName || 'N/A'}%0A` +
-          `📧 *Customer Email:* ${formData.email || 'Not provided'}%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-          `*ACTION REQUIRED*%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `✅ Please confirm this reservation by replying to this message or contacting the customer directly.%0A` +
-          `📱 Customer WhatsApp: ${formData.phone}%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-          `_This is an automated message from EventFlow_ 🌟`;
-
-        // Open WhatsApp with pre-filled message
-        window.open(`https://wa.me/${cleanWhatsapp}?text=${whatsappMessage}`, '_blank');
-      } else {
-        // Fallback to admin number if hoster WhatsApp not found
-        console.warn('Hoster WhatsApp number not found, sending to admin');
-        
-        const adminMessage = `🎟️ *NEW RESERVATION - NO HOSTER WHATSAPP* 🎟️%0A%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A` +
-          `*EVENT: ${event.title || 'N/A'}*%0A` +
-          `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-          `*Customer:* ${formData.fullName}%0A` +
-          `*Phone:* ${formData.phone}%0A` +
-          `*Tickets:* ${formData.numberOfTickets}%0A` +
-          `*Total:* AED ${event.price * formData.numberOfTickets}%0A` +
-          `*Event Host:* ${event.hosterId?.name || event.hosterName || 'N/A'}%0A` +
-          `*Reservation ID:* ${reservation?._id || 'N/A'}%0A%0A` +
-          `⚠️ *ACTION NEEDED:* Please contact the event host and provide these details.`;
-
-        window.open(`https://wa.me/+971504316900?text=${adminMessage}`, '_blank');
+        const cleanWhatsapp = hosterWhatsapp.replace(/[\s+]/g, '');
+        window.open(`https://wa.me/${cleanWhatsapp.startsWith('+') ? cleanWhatsapp : '+' + cleanWhatsapp}`, '_blank');
       }
 
-      // Send confirmation message to customer
-      const customerMessage = `🎟️ *Reservation Confirmation - EventFlow* 🎟️%0A%0A` +
-        `━━━━━━━━━━━━━━━━━━━━%0A` +
-        `Hello ${formData.fullName}! 👋%0A` +
-        `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-        `Your reservation has been received and is pending confirmation.%0A%0A` +
-        `*EVENT DETAILS*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━%0A` +
-        `📌 ${event.title || 'N/A'}%0A` +
-        `📅 ${eventDate}%0A` +
-        `⏰ ${event.time || 'N/A'}%0A` +
-        `📍 ${event.location || 'N/A'}%0A` +
-        `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-        `*YOUR BOOKING*%0A` +
-        `━━━━━━━━━━━━━━━━━━━━%0A` +
-        `🎫 Tickets: ${formData.numberOfTickets}%0A` +
-        `💰 Total: AED ${event.price * formData.numberOfTickets}%0A` +
-        `🆔 Booking ID: ${reservation?._id?.slice(-6) || 'N/A'}%0A` +
-        `━━━━━━━━━━━━━━━━━━━━%0A%0A` +
-        `You will receive a confirmation message once the host approves your reservation.%0A%0A` +
-        `Thank you for choosing EventFlow! ✨`;
-
-      // Send message to customer
-      if (formData.phone) {
-        let customerPhone = formData.phone.replace(/[\s+]/g, '');
-        if (!customerPhone.startsWith('+')) {
-          customerPhone = '+' + customerPhone;
-        }
-        window.open(`https://wa.me/${customerPhone}?text=${customerMessage}`, '_blank');
-      }
-
-      toast.success('Reservation submitted successfully!');
+      toast.success('Booking confirmed!');
       onClose();
     } catch (error) {
-      console.error('Reservation error:', error);
-      toast.error(error.response?.data?.error || 'Failed to submit reservation');
+      toast.error(error.response?.data?.error || 'Booking failed');
     } finally {
       setLoading(false);
     }
@@ -158,146 +61,185 @@ const ReservationModal = ({ event, onClose }) => {
     });
   };
 
-  const maxTickets = (event.capacity || 0) - (event.bookedSeats || 0);
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const availableSeats = (event.capacity || 0) - (event.bookedSeats || 0);
   const totalAmount = (event.price || 0) * (formData.numberOfTickets || 1);
+  const eventDate = event.date ? new Date(event.date) : new Date();
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="relative rounded-2xl bg-gradient-to-br from-purple-900/40 via-indigo-900/40 to-purple-800/40 backdrop-blur-sm border border-purple-500/20 max-w-sm w-full overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-pink-600/10 to-purple-600/10" />
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        backdropFilter: 'blur(4px)',
+      }}
+      onClick={handleBackdropClick}
+    >
+      <div className="relative w-full max-w-sm bg-gradient-to-b from-[#1a1a24] to-[#0d0d12] rounded-2xl border border-purple-500/30 shadow-2xl shadow-purple-500/20 overflow-hidden">
         
-        <div className="relative p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 border border-purple-500/30">
-                <TicketIcon className="h-5 w-5 text-purple-300" />
+        {/* Header - Compact */}
+        <div className="relative px-4 pt-4 pb-2 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-purple-600/30 to-pink-600/30 border border-purple-500/40">
+                <TicketIcon className="h-4 w-4 text-purple-300" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-white">
+                <h3 className="text-base font-bold text-white">
                   Reserve Tickets
-                </h2>
-                <p className="text-xs text-gray-400 line-clamp-1">{event.title}</p>
+                </h3>
+                <p className="text-[0.65rem] text-gray-400 line-clamp-1 max-w-[180px]">
+                  {event?.title || 'Event'}
+                </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-white/5 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
             >
-              <XMarkIcon className="h-5 w-5 text-gray-400" />
+              <XMarkIcon className="h-4 w-4 text-gray-400" />
             </button>
           </div>
+        </div>
 
-          <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-400">Available</p>
-                <p className="text-sm font-semibold text-white">
-                  {maxTickets > 0 ? maxTickets : 0} seats
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Price</p>
-                <p className="text-sm font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                  AED {event.price || 0}
-                </p>
-              </div>
+        {/* Event Quick Info - Mini */}
+        <div className="px-4 py-2 bg-white/5 border-b border-white/5">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <CalendarIcon className="h-3 w-3 text-purple-400" />
+              <span className="text-gray-300">
+                {eventDate.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MapPinIcon className="h-3 w-3 text-pink-400" />
+              <span className="text-gray-300 truncate max-w-[120px]">
+                {event.venue || 'Dubai'}
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className={`inline-flex h-2 w-2 rounded-full ${availableSeats > 0 ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className="text-gray-400 text-[0.6rem]">
+                {availableSeats} left
+              </span>
             </div>
           </div>
+        </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1">
-                Full Name *
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
-                placeholder="Enter your full name"
-              />
-            </div>
+        {/* Form - Compact */}
+        <form onSubmit={handleSubmit} className="p-4 space-y-3">
+          
+          {/* Full Name */}
+          <div>
+            <label className="flex items-center gap-1 text-[0.65rem] font-medium text-gray-300 mb-1">
+              <UserIcon className="h-3 w-3 text-purple-400" />
+              Full Name <span className="text-purple-400">*</span>
+            </label>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 text-sm bg-black/40 border border-purple-500/30 rounded-lg 
+                       text-white placeholder-gray-600 focus:border-purple-400 focus:ring-1 
+                       focus:ring-purple-400/50 outline-none transition-all"
+              placeholder="John Doe"
+            />
+          </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1">
-                Email Address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email || ''}
-                onChange={handleChange}
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
-                placeholder="your@email.com (optional)"
-              />
-            </div>
+          {/* Phone Number */}
+          <div>
+            <label className="flex items-center gap-1 text-[0.65rem] font-medium text-gray-300 mb-1">
+              <PhoneIcon className="h-3 w-3 text-purple-400" />
+              Phone <span className="text-purple-400">*</span>
+            </label>
+            <input
+              type="tel"
+              name="phone"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 text-sm bg-black/40 border border-purple-500/30 rounded-lg 
+                       text-white placeholder-gray-600 focus:border-purple-400 focus:ring-1 
+                       focus:ring-purple-400/50 outline-none transition-all"
+              placeholder="+971 50 123 4567"
+            />
+          </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1">
-                Phone Number *
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm"
-                placeholder="+971 50 123 4567"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1">
-                Number of Tickets *
+          {/* Tickets & Price Row */}
+          <div className="flex items-center gap-3">
+            {/* Tickets Select */}
+            <div className="flex-1">
+              <label className="block text-[0.65rem] font-medium text-gray-300 mb-1">
+                Tickets
               </label>
               <select
                 name="numberOfTickets"
                 value={formData.numberOfTickets}
                 onChange={handleChange}
-                required
-                className="w-full px-3 py-2.5 rounded-xl bg-gray-900/50 border border-purple-500/20 text-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent text-sm appearance-none"
+                className="w-full px-3 py-2 text-sm bg-black/40 border border-purple-500/30 rounded-lg 
+                         text-white focus:border-purple-400 focus:ring-1 focus:ring-purple-400/50 
+                         outline-none transition-all cursor-pointer"
               >
-                {Array.from({ length: Math.min(maxTickets || 10, 10) }, (_, i) => (
-                  <option key={i + 1} value={i + 1} className="bg-gray-900">
-                    {i + 1} Ticket{i + 1 > 1 ? 's' : ''}
+                {[1,2,3,4,5,6,7,8,9,10].map(num => (
+                  <option key={num} value={num} className="bg-gray-900">
+                    {num} {num === 1 ? 'ticket' : 'tickets'}
                   </option>
                 ))}
               </select>
-              <p className="mt-1 text-xs text-gray-400">
-                Max {maxTickets || 10} tickets
-              </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-900/20 to-pink-900/20 border border-purple-500/30">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-xs text-gray-400">Total</p>
-                  <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
-                    AED {totalAmount}
-                  </p>
-                </div>
-                <button
-                  type="submit"
-                  disabled={loading || maxTickets <= 0}
-                  className="py-2 px-6 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Processing...' : 'Confirm'}
-                </button>
+            {/* Price Display */}
+            <div className="flex-1">
+              <label className="block text-[0.65rem] font-medium text-gray-300 mb-1">
+                Total
+              </label>
+              <div className="px-3 py-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-lg border border-purple-500/30">
+                <p className="text-sm font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">
+                  AED {totalAmount}
+                </p>
               </div>
             </div>
+          </div>
 
+          {/* Price per ticket hint */}
+          {event.price > 0 && (
+            <p className="text-[0.6rem] text-gray-500 flex items-center gap-1">
+              <span className="inline-block w-1 h-1 rounded-full bg-purple-500"></span>
+              AED {event.price} per ticket
+            </p>
+          )}
+
+          {/* Action Buttons - Side by side */}
+          <div className="flex items-center gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="w-full py-2.5 px-4 border border-purple-500/30 text-gray-300 text-sm font-semibold rounded-xl hover:bg-white/5 transition-all duration-200 mt-2"
+              className="flex-1 py-2.5 px-3 text-xs font-medium text-gray-300 
+                       bg-white/5 border border-white/10 rounded-lg
+                       hover:bg-white/10 transition-all active:scale-95"
             >
               Cancel
             </button>
-          </form>
-        </div>
+            <button
+              type="submit"
+              disabled={loading || availableSeats <= 0}
+              className="flex-1 py-2.5 px-3 text-xs font-bold text-white
+                       bg-gradient-to-r from-purple-600 to-pink-600 rounded-lg
+                       hover:shadow-lg hover:shadow-purple-500/30 
+                       transition-all active:scale-95 disabled:opacity-50
+                       border border-white/20"
+            >
+              {loading ? '...' : availableSeats <= 0 ? 'Sold Out' : 'Book Now'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
