@@ -150,7 +150,7 @@ const Footer = () => {
               
               <div className="group flex items-center space-x-3 p-3 rounded-xl bg-gradient-to-br from-purple-900/20 to-pink-900/20 border border-purple-500/10 hover:border-purple-400/30 transition-all duration-300">
                 <EnvelopeIcon className="h-6 w-6 text-purple-400 flex-shrink-0 group-hover:scale-110 transition-transform" />
-                <p className="text-gray-400 text-sm">info@eventradubai.ae</p>
+                <p className="text-gray-400 text-sm">support@eventra.club</p>
               </div>
             </div>
             
