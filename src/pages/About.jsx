@@ -20,10 +20,10 @@ const About = () => {
       image: '/jafer.png'
     },
     {
-      name: 'DC',
+      name: 'Aghil Shajahan',
       role: 'Operations Director',
       description: 'Expert in luxury event planning and venue management across the UAE',
-      image: '/dc.png'
+      image: '/agil.png'
     },
     {
       name: 'Mariya Rose',
