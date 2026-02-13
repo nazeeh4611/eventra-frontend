@@ -26,17 +26,18 @@ const About = () => {
       image: '/agil.png'
     },
     {
-      name: 'Mariya Rose',
-      role: 'Marketing Director',
-      description: 'Digital transformation and technology innovation specialist for the events industry',
-      image: '/mariya.png'
-    },
-    {
       name: 'Jabir Ahmd',
       role: 'Technical Director',
-      description: 'Brand strategy and digital marketing expert with a creative approach',
+      description: 'Digital transformation and technology innovation specialist for the events industry ',
       image: '/jabir.png'
+    },
+    {
+      name: 'Mariya Rose',
+      role: 'Marketing Director',
+      description: 'Brand strategy and digital marketing expert with a creative approach',
+      image: '/mariya.png'
     }
+  
   ];
 
   const milestones = [
