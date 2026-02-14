@@ -9,6 +9,8 @@ import Events from '../pages/Events';
 import EventDetail from '../pages/EventDetail';
 import About from '../pages/About';
 import Contact from '../pages/Contact';
+import TermsAndConditions from '../pages/Terms';
+import PrivacyPolicy from '../pages/Privacy';
 
 const UserLayout = ({ children }) => (
   <>
@@ -61,6 +63,22 @@ const UserRoutes = (
       element={
         <UserLayout>
           <Contact />
+        </UserLayout>
+      }
+    />
+    <Route
+      path="/terms-conditions"
+      element={
+        <UserLayout>
+          <TermsAndConditions />
+        </UserLayout>
+      }
+    />
+    <Route
+      path="/privacy-policy"
+      element={
+        <UserLayout>
+          <PrivacyPolicy />
         </UserLayout>
       }
     />

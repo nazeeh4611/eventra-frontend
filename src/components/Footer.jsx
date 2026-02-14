@@ -6,7 +6,8 @@ import {
   EnvelopeIcon,
   GlobeAltIcon,
   BuildingOffice2Icon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  HeartIcon
 } from '@heroicons/react/24/outline';
 
 const Footer = () => {
@@ -178,29 +179,39 @@ const Footer = () => {
             </p>
             
             <div className="flex flex-wrap justify-center gap-6">
-              <a 
-                href="#" 
+              <Link 
+                to="/privacy-policy" 
                 className="text-sm text-gray-400 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-purple-400 hover:to-pink-400 transition-all duration-300"
               >
                 Privacy Policy
-              </a>
-              <a 
-                href="#" 
+              </Link>
+              <Link 
+                to="/terms-conditions" 
                 className="text-sm text-gray-400 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-purple-400 hover:to-pink-400 transition-all duration-300"
               >
                 Terms of Service
-              </a>
-              <a 
-                href="#" 
-                className="text-sm text-gray-400 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-purple-400 hover:to-pink-400 transition-all duration-300"
-              >
-                Cookie Policy
-              </a>
+              </Link>
             </div>
           </div>
 
+          {/* Designed & Developed by */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-400 flex items-center justify-center gap-2">
+              <span>Designed & Developed</span>
+              <span>by</span>
+              <a 
+                href="https://flyhomies.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 hover:from-pink-400 hover:to-purple-400 transition-all duration-300 hover:scale-105 inline-block"
+              >
+                FlyHomies Associates
+              </a>
+            </p>
+          </div>
+
           {/* Tagline */}
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <p className="text-sm text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 font-medium">
               Find the Party. Live the Night. 🎉
             </p>

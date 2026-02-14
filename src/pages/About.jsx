@@ -36,6 +36,18 @@ const About = () => {
       role: 'Marketing Director',
       description: 'Brand strategy and digital marketing expert with a creative approach',
       image: '/mariya.png'
+    },
+    {
+      name: 'DC',
+      role: 'Creative Director',
+      description: 'Event concepts, creative ideas and overall event aesthetics',
+      image: '/dc.png'
+    },
+    {
+      name: 'Nooja',
+      role: 'Client Relations Director',
+      description: 'Manages VIP clients, meetings & customer experience',
+      image: '/nooja.png'
     }
   
   ];
